@@ -116,7 +116,7 @@ namespace TileSpriteTMX
                         var simplifiedPolygons = ColliderSimplification.UniteCollisionPolygons(unsimplifiedPolygons[layer]);
                         var polCol = lparent.AddComponent<PolygonCollider2D>();
                         polCol.pathCount = simplifiedPolygons.Count;
-                        simplifiedPolygons.Each((gon, index) => { polCol.SetPath(index, gon.ToArray()); });
+                        simplifiedPolygons.Each((gon, index) =>  polCol.SetPath(index, gon.ToArray()) );
                     }
                 }
             }
@@ -162,11 +162,11 @@ namespace TileSpriteTMX
                         {
                             if (collisionObject.ObjectType == TmxObjectType.Basic) // add a box collider, square object
                             {
-                                addBoxCollider(go, collisionObject, flipX, flipY, layer, destPos);
+                                addBoxCollider(go, collisionObject, flipX, flipY, rotate90, layer, destPos);
                             }
                             else if (collisionObject.ObjectType == TmxObjectType.Polygon)
                             {
-                                addPolygonCollider(go, collisionObject, flipX, flipY);
+                                addPolygonCollider(go, collisionObject, flipX, flipY, rotate90, layer, destPos);
                             }
                             else if (collisionObject.ObjectType == TmxObjectType.Polyline)
                             {
@@ -182,7 +182,7 @@ namespace TileSpriteTMX
             return null;
         }
 
-        void addBoxCollider(GameObject go, TmxObject collisionObject, bool flipX, bool flipY, TmxLayer layer, Vector3 destPos)
+        void addBoxCollider(GameObject go, TmxObject collisionObject, bool flipX, bool flipY, bool rotate90, TmxLayer layer, Vector3 destPos)
         {
             bool trigger = collisionObject.Properties.ContainsKey(customProperties["is trigger"]) && collisionObject.Properties[customProperties["is trigger"]].ToLower() == "true";
 
@@ -204,12 +204,52 @@ namespace TileSpriteTMX
             }
             else
             {
-                var verticies = new List<Vector2>();
                 var pos = new Vector2(destPos.x, destPos.y);
-                verticies.Add(new Vector2(centerXPos + width / 2, centerYPos + height / 2) + pos);
-                verticies.Add(new Vector2(centerXPos - width / 2, centerYPos + height / 2) + pos);
-                verticies.Add(new Vector2(centerXPos - width / 2, centerYPos - height / 2) + pos);
-                verticies.Add(new Vector2(centerXPos + width / 2, centerYPos - height / 2) + pos);
+                var offset = new Vector2((flipX ? -1 : 1) * centerXPos, (flipY ? -1 : 1) * centerYPos) / pixelsPerUnit;
+                var verticies = new List<Vector2>();
+                verticies.Add(new Vector2( width / 2,  height / 2));
+                verticies.Add(new Vector2(-width / 2,  height / 2));
+                verticies.Add(new Vector2(-width / 2, -height / 2));
+                verticies.Add(new Vector2( width / 2, -height / 2));
+                verticies = verticies.Select(v => new Vector2((flipX ? -1 : 1) * v.x, (flipY ? -1 : 1) * v.y)).ToList();
+                verticies = verticies.Select(v => v + offset).ToList();
+                if (rotate90) verticies = verticies.Select(v => new Vector2(-v.y, v.x)).ToList();
+                verticies = verticies.Select(v => v + pos).ToList();
+
+                if (!unsimplifiedPolygons.ContainsKey(layer))
+                    unsimplifiedPolygons[layer] = new List<List<Vector2>>();
+                unsimplifiedPolygons[layer].Add(verticies);
+            }
+        }
+        void addPolygonCollider(GameObject go, TmxObject collisionObject, bool flipX, bool flipY, bool rotate90, TmxLayer layer, Vector3 destPos)
+        {
+            bool trigger = collisionObject.Properties.ContainsKey(customProperties["is trigger"]) && collisionObject.Properties[customProperties["is trigger"]].ToLower() == "true";
+
+
+            // set the path of the polygon collider
+            // we must convert the TmxPoints to Vector2s
+            var XPos = (flipX ? -1 : 1) * (float)(collisionObject.X - map.TileWidth / 2);
+            var YPos = (flipY ? -1 : 1) * -(float)(collisionObject.Y - map.TileHeight / 2); // the positive y cord in Tiled goes down so we have to flip it
+            var offset = new Vector2(XPos, YPos) / pixelsPerUnit;
+            var points = collisionObject.Points.Select(p => new Vector2((flipX ? -1 : 1) * ((float)p.X),
+                                                                              (flipY ? -1 : 1) * -((float)p.Y)) / pixelsPerUnit);
+            if (trigger || !combineColliders)
+            {
+                var polCol = go.AddComponent<PolygonCollider2D>();
+                polCol.SetPath(0, points.ToArray());
+
+                polCol.offset = offset;
+                polCol.isTrigger = trigger;
+                polCol.usedByEffector = true;
+            }
+            else
+            {
+                //var pos = new Vector2(destPos.x + map.TileWidth / 2 / pixelsPerUnit, destPos.y - map.TileHeight / 2 / pixelsPerUnit);
+                var pos = new Vector2(destPos.x, destPos.y);
+                var verticies = points.Select(p => p + offset).ToList();
+                if (rotate90) verticies = verticies.Select(v => new Vector2(-v.y, v.x)).ToList();
+                verticies = verticies.Select(p => p + pos).ToList();
+
                 if (!unsimplifiedPolygons.ContainsKey(layer))
                     unsimplifiedPolygons[layer] = new List<List<Vector2>>();
                 unsimplifiedPolygons[layer].Add(verticies);
@@ -219,43 +259,19 @@ namespace TileSpriteTMX
         {
             bool trigger = collisionObject.Properties.ContainsKey(customProperties["is trigger"]) && collisionObject.Properties[customProperties["is trigger"]].ToLower() == "true";
 
+
+            // set the path of the polygon collider
+            // we must convert the TmxPoints to Vector2s
+            var XPos = (flipX ? -1 : 1) * (float)(collisionObject.X - map.TileWidth / 2);
+            var YPos = (flipY ? -1 : 1) * -(float)(collisionObject.Y - map.TileHeight / 2); // the positive y cord in Tiled goes down so we have to flip it
+
             var edgeCol = go.AddComponent<EdgeCollider2D>();
+            edgeCol.points = collisionObject.Points.Select(p => new Vector2((flipX ? -1 : 1) * ((float)p.X),
+                                                                            (flipY ? -1 : 1) * -((float)p.Y)) / pixelsPerUnit).ToArray();
 
-            // set the path of the polygon collider
-            // we must convert the TmxPoints to Vector2s
-            var XPos = (flipX ? -1 : 1) * (float)(collisionObject.X - map.TileWidth / 2);
-            var YPos = (flipY ? -1 : 1) * -(float)(collisionObject.Y - map.TileHeight / 2); // the positive y cord in Tiled goes down so we have to flip it
-
-            if (trigger || !combineColliders)
-            {
-                edgeCol.points = collisionObject.Points.Select(p => new Vector2((flipX ? -1 : 1) * ((float)p.X),
-                                                                              (flipY ? -1 : 1) * -((float)p.Y)) / pixelsPerUnit).ToArray();
-
-                edgeCol.offset = new Vector2(XPos, YPos) / pixelsPerUnit;
-                edgeCol.isTrigger = trigger;
-                edgeCol.usedByEffector = true;
-            }
-        }
-        void addPolygonCollider(GameObject go, TmxObject collisionObject, bool flipX, bool flipY)
-        {
-            bool trigger = collisionObject.Properties.ContainsKey(customProperties["is trigger"]) && collisionObject.Properties[customProperties["is trigger"]].ToLower() == "true";
-
-            var polCol = go.AddComponent<PolygonCollider2D>();
-
-            // set the path of the polygon collider
-            // we must convert the TmxPoints to Vector2s
-            var XPos = (flipX ? -1 : 1) * (float)(collisionObject.X - map.TileWidth / 2);
-            var YPos = (flipY ? -1 : 1) * -(float)(collisionObject.Y - map.TileHeight / 2); // the positive y cord in Tiled goes down so we have to flip it
-
-            if (trigger || !combineColliders)
-            {
-                polCol.SetPath(0, collisionObject.Points.Select(p => new Vector2((flipX ? -1 : 1) * ((float)p.X),
-                                                                              (flipY ? -1 : 1) * -((float)p.Y)) / pixelsPerUnit).ToArray());
-
-                polCol.offset = new Vector2(XPos, YPos) / pixelsPerUnit;
-                polCol.isTrigger = trigger;
-                polCol.usedByEffector = true;
-            }
+            edgeCol.offset = new Vector2(XPos, YPos) / pixelsPerUnit;
+            edgeCol.isTrigger = trigger;
+            edgeCol.usedByEffector = true;
         }
 
 

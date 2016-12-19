@@ -46,7 +46,7 @@ public class ColliderSimplification
         //5 is the ammount of offset
         offset.Execute(ref solution, 5f);
 
-        //now we just need to conver it into a List<List<Vector2>> while removing the scaling
+        //now we just need to convert it into a List<List<Vector2>> while removing the scaling
         foreach (Path path in solution)
         {
             List<Vector2> unitedPolygon = new List<Vector2>();
@@ -59,7 +59,7 @@ public class ColliderSimplification
 
         //this removes some redundant vertices in the polygons when they are too close from each other
         //may be useful to clean things up a little if your initial collisions don't match perfectly from tile to tile
-        unitedPolygons = RemoveClosePointsInPolygons(unitedPolygons);
+        //unitedPolygons = RemoveClosePointsInPolygons(unitedPolygons);
 
         //everything done
         return unitedPolygons;
