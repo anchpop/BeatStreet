@@ -622,6 +622,9 @@
   <image source="../Sprites/Sheets/spritesheet_tiles.png" width="1024" height="2048"/>
  </tileset>
  <layer name="Tile Layer 1" width="30" height="15" offsetx="-64" offsety="160">
+  <properties>
+   <property name="unityLayer" value="Blocks"/>
+  </properties>
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

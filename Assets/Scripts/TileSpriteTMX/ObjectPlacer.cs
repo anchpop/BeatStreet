@@ -113,6 +113,11 @@ namespace TileSpriteTMX
                     }
                     if (unsimplifiedPolygons.ContainsKey(layer) && unsimplifiedPolygons[layer].Count != 0)
                     {
+                        string unityLayer = "Defualt";
+                        if (layer.Properties.ContainsKey(customProperties["unityLayer"]))
+                            unityLayer = layer.Properties[customProperties["unityLayer"]];
+                        lparent.layer = LayerMask.NameToLayer(unityLayer);
+
                         var simplifiedPolygons = ColliderSimplification.UniteCollisionPolygons(unsimplifiedPolygons[layer]);
                         var polCol = lparent.AddComponent<PolygonCollider2D>();
                         polCol.pathCount = simplifiedPolygons.Count;
