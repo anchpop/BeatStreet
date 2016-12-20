@@ -9,6 +9,7 @@ public class FollowPlayer : MonoBehaviour
     public Transform target;
     new Camera camera;
 
+
     void Start()
     {
         camera = GetComponent<Camera>();

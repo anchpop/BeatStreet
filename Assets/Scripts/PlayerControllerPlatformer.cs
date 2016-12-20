@@ -13,7 +13,7 @@ public class PlayerControllerPlatformer : MonoBehaviour {
 	
     void FixedUpdate()
     {
-        ccp.walk(Input.GetAxis("Horizontal"));
+        ccp.walk(Input.GetAxisRaw("Horizontal"));
     }
 
 	// Update is called once per frame
