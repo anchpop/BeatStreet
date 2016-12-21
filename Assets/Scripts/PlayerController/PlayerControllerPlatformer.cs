@@ -4,6 +4,8 @@ using System.Collections;
 [RequireComponent(typeof(CharacterControllerPlatformer))]
 public class PlayerControllerPlatformer : MonoBehaviour {
     CharacterControllerPlatformer ccp;
+
+    float movementThreshold = .2f;
 	
 	void Start ()
     {
@@ -13,14 +15,16 @@ public class PlayerControllerPlatformer : MonoBehaviour {
 	
     void FixedUpdate()
     {
-        ccp.walk(Input.GetAxisRaw("Horizontal"));
+        var horizontalMovement = Input.GetAxisRaw("Horizontal");
+        if (Mathf.Abs(horizontalMovement) > movementThreshold)
+            ccp.walk(horizontalMovement);
     }
 
 	// Update is called once per frame
 	void Update () {
-	    if (Input.GetKeyDown("b"))
+	    if (Input.GetKeyDown("space"))
         {
-            ccp.jump();
+            ccp.tryUp();
         }
 	}
 }
