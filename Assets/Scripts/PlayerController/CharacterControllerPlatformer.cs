@@ -29,17 +29,21 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     public float maxYVel = 50;
 
     bool jumpedThisFrame = false;
-
+    bool walkedThisFrame = false;
     bool tryingToGoUp = false;
+    float timeSinceLastJump;
+    float minSecondsBetweenTrumps = .2f;
 
-    float raycastDownDist = .01f;
-    float speedReasonablenessFactor = 100f;
+    float raycastDownDist = .1f;
+
 
 
 	void Start ()
     {
         body = GetComponent<Rigidbody2D>();
         boxCol = GetComponent<BoxCollider2D>();
+
+        timeSinceLastJump = Time.time;
     }
 
     List<RaycastHit2D> raycastDown(float dist)
@@ -59,32 +63,37 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     public void jump()
     {
-        if (jumpsRemaining > 0 && !jumpedThisFrame)
+        if (jumpsRemaining > 0 && !jumpedThisFrame && (Time.time - timeSinceLastJump) > minSecondsBetweenTrumps)
         {
             body.velocity = new Vector3(body.velocity.x, Mathf.Max(jumpVelocity, body.velocity.y), 0);
             jumpedThisFrame = true;
             jumpsRemaining--;
+            timeSinceLastJump = Time.time;
         }
     }
     
 	
     public void walk(float intensity)
     {
-
-        Debug.Log(body.velocity);
-        bool oppositeDirectionOfMovement = Mathf.Sign(body.velocity.x * intensity) < 0;
-        bool lessThanMaxVelocity = Mathf.Abs(body.velocity.x) <= maxRunVel;
-        if (lessThanMaxVelocity || oppositeDirectionOfMovement) 
+        if (!walkedThisFrame)
         {
-            // calculate the force of our movement, cancelling out force of friction if we're running in the same direction as we're moving
-            var f = Vector2.right * intensity * (oppositeDirectionOfMovement ? (counterForce - forceofFriction()) : (runAccel + forceofFriction()));
+            Debug.Log(body.velocity);
+            bool oppositeDirectionOfMovement = Mathf.Sign(body.velocity.x * intensity) < 0;
+            bool lessThanMaxVelocity = Mathf.Abs(body.velocity.x) <= maxRunVel;
+            if (lessThanMaxVelocity || oppositeDirectionOfMovement)
+            {
+                // calculate the force of our movement, cancelling out force of friction if we're running in the same direction as we're moving
+                var f = Vector2.right * intensity * (oppositeDirectionOfMovement ? (counterForce) : (runAccel));
 
-            if (!lessThanMaxVelocity)
-                Physics2DExtensions.AddForce(body, f, ForceMode.VelocityChange);
-            else if (Mathf.Abs(body.velocity.x + f.x) <= maxRunVel) //if the speed addition wouldn't make us accelerate past the max run speed
-                Physics2DExtensions.AddForce(body, f, ForceMode.VelocityChange);
-            else
-                body.velocity = new Vector2(Sign(body.velocity.x) * maxRunVel, body.velocity.y);
+                if (!lessThanMaxVelocity)
+                    Physics2DExtensions.AddForce(body, f, ForceMode.VelocityChange);
+                else if (Mathf.Abs(body.velocity.x + f.x) <= maxRunVel) //if the speed addition wouldn't make us accelerate past the max run speed
+                    Physics2DExtensions.AddForce(body, f, ForceMode.VelocityChange);
+                else
+                    body.velocity = new Vector2(Sign(body.velocity.x) * maxRunVel, body.velocity.y);
+            }
+
+            walkedThisFrame = true;
         }
     }
 
@@ -106,16 +115,20 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     private void FixedUpdate()
     {
-        // calculate friction
-        var oldVel = body.velocity;
-        body.velocity -= new Vector2(forceofFriction(), 0);
-        // Stop friction from making us switch directions (which does not happen in real life)
-        if (oldVel.x * body.velocity.x < 0) body.velocity = new Vector2(0, body.velocity.y);
+        if (!walkedThisFrame)
+        {
+            // calculate friction
+            var oldVel = body.velocity;
+            body.velocity -= new Vector2(forceofFriction(), 0);
+            // Stop friction from making us switch directions (which does not happen in real life)
+            if (oldVel.x * body.velocity.x < 0) body.velocity = new Vector2(0, body.velocity.y);
+        }
+        walkedThisFrame = false;
 
         // if we're either going down or not holding the up button, increase gravity
         body.gravityScale = (body.velocity.y < 0 || !tryingToGoUp) ? downwardGravityScale : upwardGravityScale;
         tryingToGoUp = false;
-        if (isOnGround() && !jumpedThisFrame) jumpsRemaining = numberOfJumps;
+        if (isOnGround() && !jumpedThisFrame && (Time.time - timeSinceLastJump) > minSecondsBetweenTrumps) jumpsRemaining = numberOfJumps;
 
         body.velocity = new Vector2(Mathf.Clamp(body.velocity.x, -maxXVel, maxXVel), Mathf.Clamp(body.velocity.y, -maxYVel, maxYVel));
 
