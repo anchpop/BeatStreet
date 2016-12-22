@@ -23,8 +23,7 @@ public class PlayerControllerPlatformer : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 	    if (Input.GetKeyDown("space"))
-        {
-            ccp.tryUp();
-        }
+            ccp.jump();
+        if (Input.GetKey("space")) ccp.tryUp();
 	}
 }

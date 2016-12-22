@@ -19,6 +19,8 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     public float groundFriction = .9f;
 
     public float jumpVelocity = 2;
+    public int numberOfJumps = 2;
+    int jumpsRemaining = 0;
     public float upwardGravityScale = .9f;
     public float downwardGravityScale = 1.3f;
     public float airFriction = .3f;
@@ -30,7 +32,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     bool tryingToGoUp = false;
 
-    float raycastDownDist = .1f;
+    float raycastDownDist = .01f;
     float speedReasonablenessFactor = 100f;
 
 
@@ -38,7 +40,6 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     {
         body = GetComponent<Rigidbody2D>();
         boxCol = GetComponent<BoxCollider2D>();
-
     }
 
     List<RaycastHit2D> raycastDown(float dist)
@@ -53,13 +54,17 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     public void tryUp()
     {
-        if (isOnGround() && !jumpedThisFrame)
+        tryingToGoUp = true;
+    }
+
+    public void jump()
+    {
+        if (jumpsRemaining > 0 && !jumpedThisFrame)
         {
             body.velocity = new Vector3(body.velocity.x, Mathf.Max(jumpVelocity, body.velocity.y), 0);
             jumpedThisFrame = true;
+            jumpsRemaining--;
         }
-
-        tryingToGoUp = true;
     }
     
 	
@@ -110,6 +115,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
         // if we're either going down or not holding the up button, increase gravity
         body.gravityScale = (body.velocity.y < 0 || !tryingToGoUp) ? downwardGravityScale : upwardGravityScale;
         tryingToGoUp = false;
+        if (isOnGround() && !jumpedThisFrame) jumpsRemaining = numberOfJumps;
 
         body.velocity = new Vector2(Mathf.Clamp(body.velocity.x, -maxXVel, maxXVel), Mathf.Clamp(body.velocity.y, -maxYVel, maxYVel));
 
@@ -119,7 +125,10 @@ public class CharacterControllerPlatformer : MonoBehaviour {
         jumpedThisFrame = false;
     }
 
-
+    public void LateUpdate()
+    {
+        jumpedThisFrame = false;
+    }
 
 
 
