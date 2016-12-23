@@ -11,22 +11,31 @@ using System.Collections.Generic;
 public class CharacterControllerPlatformer : MonoBehaviour {
     Rigidbody2D body;
     BoxCollider2D boxCol;
-    public LayerMask groundLayer;
 
+    [Header("Walking")]
+    [Tooltip("The maximum velocity that will be attainable by walking")]
     public float maxRunVel = 3;
+    [Tooltip("The force that will be applied to the player when he is walking")]
     public float runAccel = 5;     // acceleration when running 
+    [Tooltip("The force that will be applied to the player when he is trying to walk in the opposite direction he is moving")]
     public float counterForce = 8; // acceleration when trying to move the opposite direction as the movement
     public float groundFriction = .9f;
 
+    [Header("Jumping")]
+    [Tooltip("The y velocity for the player to have after a jump")]
     public float jumpVelocity = 2;
-    public int numberOfJumps = 2;
+    public int numberOfJumps = 1;
     int jumpsRemaining = 0;
+    [Tooltip("Gravity when the player is moving upward and holding the up-button")]
     public float upwardGravityScale = .9f;
+    [Tooltip("Gravity when the player is moving downward")]
     public float downwardGravityScale = 1.3f;
     public float airFriction = .3f;
 
+    [Header("Misc.")]
     public float maxXVel = 20;
     public float maxYVel = 50;
+    public LayerMask groundLayer;
 
     bool jumpedThisFrame = false;
     bool walkedThisFrame = false;
