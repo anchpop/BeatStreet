@@ -13,4 +13,6 @@ namespace TileSpriteTMX
             foreach (var e in ie) action(e, i++);
         }
     }
+
+
 }

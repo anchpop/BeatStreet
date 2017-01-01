@@ -32,6 +32,11 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     public float downwardGravityScale = 1.3f;
     public float airFriction = .3f;
 
+
+    [Header("Grappling")]
+    public float grappleSpeed = 3;
+    public float grappleDistance = 7;
+
     [Header("Misc.")]
     public float maxXVel = 20;
     public float maxYVel = 50;
@@ -45,6 +50,8 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     float raycastDownDist = .1f;
 
+    Grapple grapple;
+    GameObject grappleObject;
 
 
 	void Start ()
@@ -89,21 +96,31 @@ public class CharacterControllerPlatformer : MonoBehaviour {
             Debug.Log(body.velocity);
             bool oppositeDirectionOfMovement = Mathf.Sign(body.velocity.x * intensity) < 0;
             bool lessThanMaxVelocity = Mathf.Abs(body.velocity.x) <= maxRunVel;
-            if (lessThanMaxVelocity || oppositeDirectionOfMovement)
-            {
-                // calculate the force of our movement, cancelling out force of friction if we're running in the same direction as we're moving
-                var f = Vector2.right * intensity * (oppositeDirectionOfMovement ? (counterForce) : (runAccel));
 
-                if (!lessThanMaxVelocity)
-                    Physics2DExtensions.AddForce(body, f, ForceMode.VelocityChange);
-                else if (Mathf.Abs(body.velocity.x + f.x) <= maxRunVel) //if the speed addition wouldn't make us accelerate past the max run speed
-                    Physics2DExtensions.AddForce(body, f, ForceMode.VelocityChange);
-                else
-                    body.velocity = new Vector2(Sign(body.velocity.x) * maxRunVel, body.velocity.y);
-            }
+            // calculate the force of our movement, cancelling out force of friction if we're running in the same direction as we're moving
+            var f = Vector2.right * intensity * (oppositeDirectionOfMovement ? (counterForce) : (runAccel));
+
+            if (!lessThanMaxVelocity || oppositeDirectionOfMovement)
+                Physics2DExtensions.AddForce(body, f, ForceMode.VelocityChange);
+            else if (Mathf.Abs(body.velocity.x + f.x) <= maxRunVel) //if the speed addition wouldn't make us accelerate past the max run speed
+                Physics2DExtensions.AddForce(body, f, ForceMode.VelocityChange);
+            else 
+                body.velocity = new Vector2(Sign(body.velocity.x) * maxRunVel, body.velocity.y);
 
             walkedThisFrame = true;
         }
+    }
+
+    public void shootGrapple(Vector3 position)
+    {
+        if (grappleObject) Destroy(grappleObject);
+
+        grappleObject = new GameObject("grappleHost");
+        grappleObject.transform.parent = transform;
+        grappleObject.transform.position = Vector3.zero;
+
+        grapple = grappleObject.AddComponent<Grapple>();
+        grapple.shoot(body, position - transform.position, grappleSpeed, grappleDistance);
     }
 
     public bool isOnGround()

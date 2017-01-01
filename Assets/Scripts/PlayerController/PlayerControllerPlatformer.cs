@@ -25,5 +25,11 @@ public class PlayerControllerPlatformer : MonoBehaviour {
 	    if (Input.GetKeyDown("space"))
             ccp.jump();
         if (Input.GetKey("space")) ccp.tryUp();
+        if (Input.GetMouseButtonDown(0))
+        {
+            var target = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            target.z = 0;
+            ccp.shootGrapple(target);
+        }
 	}
 }
