@@ -30,6 +30,8 @@ public class Grapple : MonoBehaviour {
     float distanceExtended = 0;
     float oldgrav;
 
+    DistanceJoint2D joint;
+
     float bendThreshold = .05f;
 
     States currentState = States.Limbo;
@@ -83,6 +85,10 @@ public class Grapple : MonoBehaviour {
             {
                 if (hit && hit.collider.gameObject != body.gameObject)
                 {
+                    joint = body.gameObject.AddComponent<DistanceJoint2D>();
+                    joint.enableCollision = true;
+                    joint.maxDistanceOnly = true;
+                    joint.connectedAnchor = hit.point;
                     currentState = States.Stuck;
                     oldgrav = body.gravityScale;
                     body.gravityScale = characterController.grappleGravityScale;
@@ -108,6 +114,7 @@ public class Grapple : MonoBehaviour {
 
         if (currentState == States.Stuck)
         {
+
             var force = direction.normalized * (characterController.grappleForce + direction.magnitude * characterController.grappleForceDistanceBoost);
             characterController.applyContinuousForce(force, characterController.grappleMaxVelocity);
         }
@@ -119,7 +126,9 @@ public class Grapple : MonoBehaviour {
 
     public void scram()
     {
+        Destroy(joint);
         body.gravityScale = oldgrav;
+        Destroy(this);
         Destroy(gameObject);
     }
 

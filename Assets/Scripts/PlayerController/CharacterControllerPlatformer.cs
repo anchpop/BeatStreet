@@ -38,7 +38,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     public float grappleForce = 5;
     public float grappleForceDistanceBoost = 0;
     public float grappleMaxVelocity = 11;
-    public float grappleGravityScale = .2f;
+    public float grappleGravityScale = .4f;
     public LayerMask grappleMask;
 
     [Header("Misc.")]
@@ -130,7 +130,8 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     public void shootGrapple(Vector3 position)
     {
-        if (grappleObject) Destroy(grappleObject);
+        if (grapple)
+            grapple.scram();
 
         grappleObject = new GameObject("grappleHost");
         grappleObject.transform.parent = transform;
@@ -142,7 +143,8 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     public void releaseGrapple()
     {
-        if (grappleObject) Destroy(grappleObject);
+        if (grapple)
+            grapple.scram();
 
     }
 
