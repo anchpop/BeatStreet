@@ -113,10 +113,14 @@ namespace TileSpriteTMX
                     }
                     if (unsimplifiedPolygons.ContainsKey(layer) && unsimplifiedPolygons[layer].Count != 0)
                     {
-                        string unityLayer = "Defualt";
                         if (layer.Properties.ContainsKey(customProperties["unityLayer"]))
-                            unityLayer = layer.Properties[customProperties["unityLayer"]];
-                        lparent.layer = LayerMask.NameToLayer(unityLayer);
+                        {
+                            string unityLayer = layer.Properties[customProperties["unityLayer"]];
+                            if (LayerMask.NameToLayer(unityLayer) != -1)  // undocumented behavoir here, NameToLayer returns -1 if layer not found
+                                lparent.layer = LayerMask.NameToLayer(unityLayer);
+                            else
+                                throw new System.Exception("Unable to find layer named " + unityLayer);
+                        }
 
                         var simplifiedPolygons = ColliderSimplification.UniteCollisionPolygons(unsimplifiedPolygons[layer]);
                         var polCol = lparent.AddComponent<PolygonCollider2D>();

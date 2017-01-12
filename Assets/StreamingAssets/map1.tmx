@@ -4,7 +4,6 @@
   <image source="../Sprites/Sheets/spritesheet_ground.png" width="1024" height="2048"/>
   <tile id="0">
    <properties>
-    <property name="basePrefab" value="basePlatformTile"/>
     <property name="unityLayer" value="Blocks"/>
    </properties>
    <objectgroup draworder="index"/>
@@ -139,7 +138,7 @@
      <properties>
       <property name="usedByEffector" value="true"/>
      </properties>
-     <polygon points="0,0 127.863,-128.008 127.869,0"/>
+     <polygon points="0,0 128,-128 128,0"/>
     </object>
    </objectgroup>
   </tile>

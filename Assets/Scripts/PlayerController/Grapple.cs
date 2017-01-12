@@ -7,6 +7,7 @@ public class GrappleSite
 {
     public Vector3 position;
     public float angle;
+    GameObject connected;
 
     public GrappleSite(Vector3 p)
     {
@@ -30,7 +31,7 @@ public class Grapple : MonoBehaviour {
     float distanceExtended = 0;
     float oldgrav;
 
-    float bendThreshold = .05f;
+    float connectionThreshold = .05f;
 
     States currentState = States.Limbo;
 
@@ -110,6 +111,8 @@ public class Grapple : MonoBehaviour {
         {
             var force = direction.normalized * (characterController.grappleForce + direction.magnitude * characterController.grappleForceDistanceBoost);
             characterController.applyContinuousForce(force, characterController.grappleMaxVelocity);
+
+
         }
 
 

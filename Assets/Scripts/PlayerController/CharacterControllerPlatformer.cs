@@ -109,7 +109,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     }
     
 	
-    public void walk(float intensity)
+    public void walk(float intensity) // TODO: If the slope changes, take the speed on the previous slope and make sure they have it on the new one 
     {
         if (!walkedThisFrame)
         {
