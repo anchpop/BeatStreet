@@ -86,6 +86,7 @@ public class Grapple : MonoBehaviour {
                     currentState = States.Stuck;
                     oldgrav = body.gravityScale;
                     body.gravityScale = characterController.grappleGravityScale;
+                    headgrapple.position = hit.point;
                     return;
                 }
             }
