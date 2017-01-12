@@ -367,7 +367,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ec1c85f00407b64f830b659585b8ad6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  TmxPath: map1.tmx
+  TmxPath: map2.tmx
   createMapOnAwake: 1
   pixelsPerUnit: 140
   tileSheets:
