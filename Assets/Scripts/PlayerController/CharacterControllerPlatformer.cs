@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 
 
-
 [RequireComponent(typeof(Rigidbody2D))]
 public class CharacterControllerPlatformer : MonoBehaviour {
     Rigidbody2D body;
@@ -36,6 +35,10 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     [Header("Grappling")]
     public float grappleSpeed = 3;
     public float grappleDistance = 7;
+    public float grappleForce = 5;
+    public float grappleForceDistanceBoost = 0;
+    public float grappleGravityScale = .2f;
+    public LayerMask grappleMask;
 
     [Header("Misc.")]
     public float maxXVel = 20;
@@ -100,14 +103,15 @@ public class CharacterControllerPlatformer : MonoBehaviour {
             // calculate the force of our movement, cancelling out force of friction if we're running in the same direction as we're moving
             var f = Vector2.right * intensity * (oppositeDirectionOfMovement ? (counterForce) : (runAccel));
 
-            if (!lessThanMaxVelocity || oppositeDirectionOfMovement)
-                Physics2DExtensions.AddForce(body, f, ForceMode.VelocityChange);
-            else if (Mathf.Abs(body.velocity.x + f.x) <= maxRunVel) //if the speed addition wouldn't make us accelerate past the max run speed
-                Physics2DExtensions.AddForce(body, f, ForceMode.VelocityChange);
-            else 
-                body.velocity = new Vector2(Sign(body.velocity.x) * maxRunVel, body.velocity.y);
-
             walkedThisFrame = true;
+
+            if (oppositeDirectionOfMovement)                        // if we're moving in the opposite direction of movement
+                body.AddForce(f, ForceMode.VelocityChange);
+            else if (Mathf.Abs(body.velocity.x + f.x) <= maxRunVel) //if the speed addition wouldn't make us accelerate past the max run speed
+                body.AddForce(f, ForceMode.VelocityChange);
+            else
+                body.velocity = new Vector2(Sign(body.velocity.x) * maxRunVel, body.velocity.y); // bring us straight to the maximum speed  
+
         }
     }
 
@@ -120,7 +124,13 @@ public class CharacterControllerPlatformer : MonoBehaviour {
         grappleObject.transform.position = Vector3.zero;
 
         grapple = grappleObject.AddComponent<Grapple>();
-        grapple.shoot(body, position - transform.position, grappleSpeed, grappleDistance);
+        grapple.shoot(body, position - transform.position, grappleSpeed, grappleDistance, grappleForce, grappleForceDistanceBoost, grappleGravityScale, grappleMask);
+    }
+
+    public void releaseGrapple()
+    {
+        if (grappleObject) Destroy(grappleObject);
+
     }
 
     public bool isOnGround()
@@ -146,13 +156,14 @@ public class CharacterControllerPlatformer : MonoBehaviour {
             // calculate friction
             var oldVel = body.velocity;
             body.velocity -= new Vector2(forceofFriction(), 0);
-            // Stop friction from making us switch directions (which does not happen in real life)
+            // Stop friction from making us switch directions (which clearly does not happen in real life)
             if (oldVel.x * body.velocity.x < 0) body.velocity = new Vector2(0, body.velocity.y);
         }
         walkedThisFrame = false;
 
         // if we're either going down or not holding the up button, increase gravity
-        body.gravityScale = (body.velocity.y < 0 || !tryingToGoUp) ? downwardGravityScale : upwardGravityScale;
+        if (!grappleObject)
+            body.gravityScale = (body.velocity.y < 0 || !tryingToGoUp) ? downwardGravityScale : upwardGravityScale;
         tryingToGoUp = false;
         if (isOnGround() && !jumpedThisFrame && (Time.time - timeSinceLastJump) > minSecondsBetweenTrumps) jumpsRemaining = numberOfJumps;
 

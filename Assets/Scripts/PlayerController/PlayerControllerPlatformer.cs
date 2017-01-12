@@ -31,5 +31,7 @@ public class PlayerControllerPlatformer : MonoBehaviour {
             target.z = 0;
             ccp.shootGrapple(target);
         }
-	}
+        if (Input.GetMouseButtonUp(0)) ccp.releaseGrapple();
+
+    }
 }
