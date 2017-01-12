@@ -22,19 +22,13 @@ public class Grapple : MonoBehaviour {
         Stuck
     }
 
-    Rigidbody2D owner;
-    float speed;
+    Rigidbody2D body;
+    CharacterControllerPlatformer characterController;
     Vector3 startingVelocity;
-    Vector3 dir;
+    Vector3 extensionDirection;
     List<GrappleSite> grapplePos = new List<GrappleSite>();
-    float maxExtent;
     float distanceExtended = 0;
-    float baseForce;
-    float forceMultiplier;
-    float gravityScale;
     float oldgrav;
-
-    LayerMask grappleMask;
 
     float bendThreshold = .05f;
 
@@ -58,23 +52,24 @@ public class Grapple : MonoBehaviour {
             return rope;
         }
     }
-	
-	
-	void Update ()
+
+
+    private void Update()
     {
-        grapplePos[0].position = owner.transform.position;
+        grapplePos[0].position = body.transform.position;
         var headgrapple = grapplePos[grapplePos.Count - 1];
         var backgrapple = grapplePos[grapplePos.Count - 2];
         var direction = headgrapple.position - backgrapple.position;
+        float velocityTowardsHook = Vector3.Dot(body.velocity, direction);
 
         if (currentState == States.Extending)
         {
 
-            var delta = (dir * speed) * Time.deltaTime;
+            var delta = (extensionDirection * characterController.grappleSpeed) * Time.deltaTime;
             headgrapple.position += delta + startingVelocity * Time.deltaTime;
             distanceExtended += delta.magnitude;
 
-            if (distanceExtended >= maxExtent)
+            if (distanceExtended >= characterController.grappleDistance)
             {
                 scram();
                 return;
@@ -83,21 +78,37 @@ public class Grapple : MonoBehaviour {
             backgrapple = grapplePos[grapplePos.Count - 2];
             direction = headgrapple.position - backgrapple.position;
 
-            var hits = Physics2D.RaycastAll(backgrapple.position, direction, direction.magnitude, grappleMask);
+            var hits = Physics2D.RaycastAll(backgrapple.position, direction, direction.magnitude, characterController.grappleMask);
             foreach (var hit in hits)
             {
-                if (hit && hit.collider.gameObject != owner.gameObject)
+                if (hit && hit.collider.gameObject != body.gameObject)
                 {
                     currentState = States.Stuck;
-                    oldgrav = owner.gravityScale;
-                    owner.gravityScale = gravityScale;
+                    oldgrav = body.gravityScale;
+                    body.gravityScale = characterController.grappleGravityScale;
                     return;
                 }
             }
         }
+
+
+        getRope().SetPositions(grapplePos.Select(g => g.position).ToArray());
+
+
+    }
+
+    void FixedUpdate ()
+    {
+        grapplePos[0].position = body.transform.position;
+        var headgrapple = grapplePos[grapplePos.Count - 1];
+        var backgrapple = grapplePos[grapplePos.Count - 2];
+        var direction = headgrapple.position - backgrapple.position;
+        float velocityTowardsHook = Vector3.Dot(body.velocity, direction);
+
         if (currentState == States.Stuck)
         {
-            owner.AddForce(direction.normalized * (baseForce + direction.magnitude * forceMultiplier), ForceMode.VelocityChange);
+            var force = direction.normalized * (characterController.grappleForce + direction.magnitude * characterController.grappleForceDistanceBoost);
+            characterController.applyContinuousForce(force, characterController.grappleMaxVelocity);
         }
 
 
@@ -107,23 +118,18 @@ public class Grapple : MonoBehaviour {
 
     public void scram()
     {
-        owner.gravityScale = oldgrav;
+        body.gravityScale = oldgrav;
         Destroy(gameObject);
     }
 
-    public void shoot(Rigidbody2D shooter, Vector3 shootDirection, float fireSpeed, float maxExtension, float grappleForce, float grappleForceMultiplier, float grappleGravityScale, LayerMask mask)
+    public void shoot(CharacterControllerPlatformer shooter, Vector3 shootDirection)
     {
-        owner = shooter;
-        dir = shootDirection.normalized;
-        speed = fireSpeed;
-        startingVelocity = shooter.velocity;
-        maxExtent = maxExtension;
-        grappleMask = mask;
-        baseForce = grappleForce;
-        forceMultiplier = grappleForceMultiplier;
-        grapplePos.Add(new GrappleSite(shooter.position)); // current starting position of rope
-        grapplePos.Add(new GrappleSite(shooter.position)); // current ending position of rope
-        gravityScale = grappleGravityScale;
+        body = shooter.GetComponent<Rigidbody2D>();
+        characterController = shooter;
+        extensionDirection = shootDirection.normalized;
+        startingVelocity = body.velocity;
+        grapplePos.Add(new GrappleSite(body.position)); // current starting position of rope
+        grapplePos.Add(new GrappleSite(body.position)); // current ending position of rope
         currentState = States.Extending;
 
         getRope().numPositions = grapplePos.Count;

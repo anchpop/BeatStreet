@@ -37,6 +37,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     public float grappleDistance = 7;
     public float grappleForce = 5;
     public float grappleForceDistanceBoost = 0;
+    public float grappleMaxVelocity = 11;
     public float grappleGravityScale = .2f;
     public LayerMask grappleMask;
 
@@ -63,6 +64,22 @@ public class CharacterControllerPlatformer : MonoBehaviour {
         boxCol = GetComponent<BoxCollider2D>();
 
         timeSinceLastJump = Time.time;
+    }
+
+    public void applyContinuousForce(Vector3 force, float maxVelocity)
+    {
+        Vector2 velocityChange = force * Time.fixedDeltaTime;
+        float velocityInDirection = Vector3.Dot(body.velocity, force.normalized);
+        float velocityInDirectionAfterForce = Vector3.Dot(body.velocity + velocityChange, force.normalized);
+
+
+        if (Mathf.Abs(velocityInDirectionAfterForce) < maxVelocity || Mathf.Sign(velocityInDirectionAfterForce) < 0) // if we're moving in the opposite direction of movement
+            body.AddForce(force, ForceMode.Acceleration);
+        else if (Mathf.Abs(velocityInDirection) < maxVelocity) // if the speed addition wouldn't make us accelerate past the max run speed
+            body.velocity = body.velocity - (Vector2)Vector3.Project(body.velocity, force) + (Vector2)(force.normalized * maxVelocity);
+        //else if (Mathf.Abs(body.velocity.x) <= maxRunVel)       // if we're moving slower than the max run speed already
+        // body.velocity = new Vector2(Sign(body.velocity.x) * maxRunVel, body.velocity.y); // bring us straight to the maximum speed  
+
     }
 
     List<RaycastHit2D> raycastDown(float dist)
@@ -98,22 +115,17 @@ public class CharacterControllerPlatformer : MonoBehaviour {
         {
             Debug.Log(body.velocity);
             bool oppositeDirectionOfMovement = Mathf.Sign(body.velocity.x * intensity) < 0;
-            bool lessThanMaxVelocity = Mathf.Abs(body.velocity.x) <= maxRunVel;
 
             // calculate the force of our movement, cancelling out force of friction if we're running in the same direction as we're moving
             var f = Vector2.right * intensity * (oppositeDirectionOfMovement ? (counterForce) : (runAccel));
 
+            applyContinuousForce(f, maxRunVel);
             walkedThisFrame = true;
 
-            if (oppositeDirectionOfMovement)                        // if we're moving in the opposite direction of movement
-                body.AddForce(f, ForceMode.VelocityChange);
-            else if (Mathf.Abs(body.velocity.x + f.x) <= maxRunVel) //if the speed addition wouldn't make us accelerate past the max run speed
-                body.AddForce(f, ForceMode.VelocityChange);
-            else
-                body.velocity = new Vector2(Sign(body.velocity.x) * maxRunVel, body.velocity.y); // bring us straight to the maximum speed  
 
         }
     }
+    
 
     public void shootGrapple(Vector3 position)
     {
@@ -124,7 +136,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
         grappleObject.transform.position = Vector3.zero;
 
         grapple = grappleObject.AddComponent<Grapple>();
-        grapple.shoot(body, position - transform.position, grappleSpeed, grappleDistance, grappleForce, grappleForceDistanceBoost, grappleGravityScale, grappleMask);
+        grapple.shoot(this, position - transform.position);
     }
 
     public void releaseGrapple()
