@@ -113,10 +113,12 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     {
         if (!walkedThisFrame)
         {
-            bool oppositeDirectionOfMovement = Mathf.Sign(body.velocity.x * intensity) < 0;
+            bool oppositeDirectionOfMovement = body.velocity.x * intensity < 0;
 
             // calculate the force of our movement, cancelling out force of friction if we're running in the same direction as we're moving
-            var f = Vector2.right * intensity * (oppositeDirectionOfMovement ? (counterForce) : (runAccel));
+            // getGroundNormal().Rotate(-90f) will return the direction of the ground we're walking on. But we need to make sure we're on the ground
+            var walkDirection = (isOnGround() ? getGroundNormal().Rotate(-90f) : Vector2.right) * intensity;
+            var f = walkDirection * (oppositeDirectionOfMovement ? (counterForce) : (runAccel)); // 
 
             applyContinuousForce(f, maxRunVel);
             walkedThisFrame = true;
@@ -148,6 +150,16 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     {
         return raycastDown(raycastDownDist).Any(r => Vector2.Angle(Vector2.up, r.normal) < 90); // make sure that we didn't collide with a wall
     }
+
+    public Vector2 getGroundNormal() // assumes character is grounded
+    {
+        var hits = raycastDown(raycastDownDist).Where(x => x);
+        if (body.velocity.x < 0) // if we're moving left, return the first (and therefore leftmost) raycast's normal
+            return hits.First().normal;
+        else
+            return hits.Last().normal; 
+    }
+
     public float forceofFriction()
     {
         var frictionCoefficient = isOnGround() ? groundFriction : airFriction;
