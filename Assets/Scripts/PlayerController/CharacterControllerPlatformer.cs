@@ -113,7 +113,6 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     {
         if (!walkedThisFrame)
         {
-            Debug.Log(body.velocity);
             bool oppositeDirectionOfMovement = Mathf.Sign(body.velocity.x * intensity) < 0;
 
             // calculate the force of our movement, cancelling out force of friction if we're running in the same direction as we're moving
@@ -147,7 +146,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     public bool isOnGround()
     {
-        return raycastDown(raycastDownDist).Any(r => r);
+        return raycastDown(raycastDownDist).Any(r => Vector2.Angle(Vector2.up, r.normal) < 90); // make sure that we didn't collide with a wall
     }
     public float forceofFriction()
     {
