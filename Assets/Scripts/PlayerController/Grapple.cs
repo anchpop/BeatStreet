@@ -79,7 +79,7 @@ public class Grapple : MonoBehaviour {
             backgrapple = grapplePos[grapplePos.Count - 2];
             direction = headgrapple.position - backgrapple.position;
 
-            var hits = Physics2D.RaycastAll(backgrapple.position, direction, direction.magnitude, characterController.grappleMask);
+            var hits = Physics2D.LinecastAll(backgrapple.position, headgrapple.position, characterController.grappleMask);
             foreach (var hit in hits)
             {
                 if (hit && hit.collider.gameObject != body.gameObject)
@@ -102,8 +102,8 @@ public class Grapple : MonoBehaviour {
     void FixedUpdate ()
     {
         grapplePos[0].position = body.transform.position;
-        var headgrapple = grapplePos[grapplePos.Count - 1];
-        var backgrapple = grapplePos[grapplePos.Count - 2];
+        var headgrapple = grapplePos[1];
+        var backgrapple = grapplePos[0];
         var direction = headgrapple.position - backgrapple.position;
         float velocityTowardsHook = Vector3.Dot(body.velocity, direction);
 
@@ -112,12 +112,59 @@ public class Grapple : MonoBehaviour {
             var force = direction.normalized * (characterController.grappleForce + direction.magnitude * characterController.grappleForceDistanceBoost);
             characterController.applyContinuousForce(force, characterController.grappleMaxVelocity);
 
+            if (characterController.bendGrapple)
+            {
 
+                grapplePos = cleanGrapples();
+                grapplePos = recheckGrapplePoints();
+            }
         }
 
-
+        getRope().numPositions = grapplePos.Count;
         getRope().SetPositions(grapplePos.Select(g => g.position).ToArray());
 
+    }
+
+    public List<GrappleSite> cleanGrapples()
+    {
+        var newGrapplePos = new List<GrappleSite>();
+        newGrapplePos.Add(grapplePos[0]);
+        for (int i = 1; i < grapplePos.Count - 1; i++) // we want all the elements of the list but the first and last
+        {
+
+            var prevGrap = grapplePos[i-1];
+            var currentGrap = grapplePos[i];
+            var nextGrap = grapplePos[i + 1];
+            var angle = (currentGrap.position - prevGrap.position).AngleTo(currentGrap.position - nextGrap.position);
+            if (angle / currentGrap.angle < 0) newGrapplePos.Add(currentGrap);
+        }
+        newGrapplePos.Add(grapplePos.Last());
+        return newGrapplePos;
+    }
+
+    public List<GrappleSite> recheckGrapplePoints()
+    {
+        var newGrapplePos = new List<GrappleSite>();
+        newGrapplePos.Add(grapplePos[0]);
+        for (int i = 0; i < grapplePos.Count - 1; i++)
+        {
+
+            var firstGrap = grapplePos[i];
+            var secondGrap = grapplePos[i + 1];
+
+            var dir = secondGrap.position - firstGrap.position;
+
+            var hit = Physics2D.Raycast(firstGrap.position, dir, dir.magnitude - connectionThreshold, characterController.grappleBendMask);
+            if (hit && hit.collider.gameObject != body.gameObject && hit.point != (Vector2)newGrapplePos.Last().position)
+            {
+                var gSite = new GrappleSite(hit.point);
+                newGrapplePos.Add(gSite);
+                newGrapplePos.Last().angle = (gSite.position - newGrapplePos.Last().position).AngleTo(secondGrap.position - newGrapplePos.Last().position);
+            }
+
+            newGrapplePos.Add(secondGrap);
+        }
+        return newGrapplePos;
     }
 
     public void scram()

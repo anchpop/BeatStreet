@@ -239,9 +239,13 @@ MonoBehaviour:
   grappleForceDistanceBoost: 0.05
   grappleMaxVelocity: 15
   grappleGravityScale: 1.2
+  bendGrapple: 1
   grappleMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  grappleBendMask:
+    serializedVersion: 2
+    m_Bits: 256
   maxXVel: 20
   maxYVel: 50
   groundLayer:
