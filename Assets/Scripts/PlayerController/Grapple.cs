@@ -117,6 +117,7 @@ public class Grapple : MonoBehaviour {
 
                 grapplePos = cleanGrapples();
                 grapplePos = recheckGrapplePoints();
+                grapplePos = cleanGrapples();
             }
         }
 
@@ -135,8 +136,14 @@ public class Grapple : MonoBehaviour {
             var prevGrap = grapplePos[i-1];
             var currentGrap = grapplePos[i];
             var nextGrap = grapplePos[i + 1];
-            var angle = (currentGrap.position - prevGrap.position).AngleTo(currentGrap.position - nextGrap.position);
-            if (angle / currentGrap.angle < 0) newGrapplePos.Add(currentGrap);
+            var angle = threePointAngle(prevGrap.position, currentGrap.position, nextGrap.position);
+            Debug.Log(i + ": " + angle + " vs the old angle " + currentGrap.angle);
+            if (angle / currentGrap.angle > 0) // if the angle has not changed signs
+            {
+                currentGrap.angle = angle;
+                newGrapplePos.Add(currentGrap);
+            }
+
         }
         newGrapplePos.Add(grapplePos.Last());
         return newGrapplePos;
@@ -158,8 +165,8 @@ public class Grapple : MonoBehaviour {
             if (hit && hit.collider.gameObject != body.gameObject && hit.point != (Vector2)newGrapplePos.Last().position)
             {
                 var gSite = new GrappleSite(hit.point);
+                gSite.angle = threePointAngle(firstGrap.position, gSite.position, secondGrap.position);
                 newGrapplePos.Add(gSite);
-                newGrapplePos.Last().angle = (gSite.position - newGrapplePos.Last().position).AngleTo(secondGrap.position - newGrapplePos.Last().position);
             }
 
             newGrapplePos.Add(secondGrap);
@@ -186,5 +193,22 @@ public class Grapple : MonoBehaviour {
         getRope().numPositions = grapplePos.Count;
         getRope().SetPositions(grapplePos.Select(g => g.position).ToArray());
 
+    }
+
+    public float threePointAngle(Vector3 A, Vector3 B, Vector3 C)
+    {
+
+        var Va = A - B;
+        var Vb = C - B;
+
+        var angle = Mathf.Acos(Vector3.Dot(Va.normalized, Vb.normalized));
+        var cross = Vector3.Cross(Va, Vb);
+        if (Vector3.Dot(Vector3.forward, cross) < 0)
+        { // Or > 0
+            angle = -angle;
+        }
+        //var dot = Vector3.Dot(v1.normalized, v2.normalized);
+        //return Mathf.Acos(dot); ;
+        return angle;
     }
 }
