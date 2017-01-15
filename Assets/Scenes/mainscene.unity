@@ -230,8 +230,8 @@ MonoBehaviour:
   groundFriction: 9.19
   jumpVelocity: 11
   numberOfJumps: 2
-  upwardGravityScale: 1.2
-  downwardGravityScale: 1.6
+  upwardGravityScale: 1.6
+  downwardGravityScale: 2
   airFriction: 2
   grappleSpeed: 35
   grappleDistance: 10
@@ -239,13 +239,14 @@ MonoBehaviour:
   grappleForceDistanceBoost: 0.05
   grappleMaxVelocity: 15
   grappleGravityScale: 1.2
-  bendGrapple: 1
   grappleMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  bendGrapple: 1
   grappleBendMask:
     serializedVersion: 2
     m_Bits: 256
+  useAdvancedBending: 1
   maxXVel: 20
   maxYVel: 50
   groundLayer:

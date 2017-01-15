@@ -121,9 +121,8 @@ public class Grapple : MonoBehaviour {
 
             if (characterController.bendGrapple)
             {
-
-                grappleSites = cleanGrapples();
                 grappleSites = recheckGrapplePoints(oldsites);
+                grappleSites = cleanGrapples();
             }
         }
 
@@ -176,7 +175,7 @@ public class Grapple : MonoBehaviour {
 
             var dir = secondGrap.position - firstGrap.position;
 
-            if ((firstGrap.position - secondGrap.position).sqrMagnitude > Mathf.Pow(veryShortLineThreshold, 2))
+            if ((firstGrap.position != oldSites[i] || secondGrap.position != oldSites[i+1]) && (firstGrap.position - secondGrap.position).sqrMagnitude > Mathf.Pow(veryShortLineThreshold, 2))
             {
                 var hit = Physics2D.Raycast(firstGrap.position, dir, dir.magnitude - connectionThreshold, characterController.grappleBendMask);
                 if (hit && hit.collider.gameObject != body.gameObject)
@@ -209,7 +208,7 @@ public class Grapple : MonoBehaviour {
         var verticiesInTriangle = verticies.Where(v => pointWithinTriangle(v, pivot, oldPosition, newPosition)).ToList();
         if (verticiesInTriangle.Count() == 0) return new List<Vector3>() { };
 
-        var newPivot = verticiesInTriangle.MaxBy(v => threePointAngle(v, pivot, newPosition));
+        var newPivot = verticiesInTriangle.MaxBy(v => Mathf.Abs(threePointAngle(v, pivot, newPosition)));
         
         return new List<Vector3>(sweepAndBend(newPivot, oldPosition, newPosition, verticiesInTriangle.ToArray())) { newPivot }; ;
     }
@@ -288,15 +287,14 @@ public class Grapple : MonoBehaviour {
         foreach (Vector3 colliderPoint in getAllColliderPoints(hit))
         {
             // Convert to world point
-            Vector3 colliderPointWorld = hit.transform.TransformPoint(colliderPoint);
 
-            Vector3 diff = hit.point - (Vector2)colliderPointWorld;
+            Vector3 diff = hit.point - (Vector2)colliderPoint;
             float distSqr = diff.sqrMagnitude;
 
             if (distSqr < minDistanceSqr)
             {
                 minDistanceSqr = distSqr;
-                nearestColliderPoint = colliderPointWorld;
+                nearestColliderPoint = colliderPoint;
             }
         }
 
