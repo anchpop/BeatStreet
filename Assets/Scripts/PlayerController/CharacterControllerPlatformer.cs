@@ -39,9 +39,11 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     public float grappleForceDistanceBoost = 0;
     public float grappleMaxVelocity = 11;
     public float grappleGravityScale = .2f;
-    public bool bendGrapple = true;
     public LayerMask grappleMask;
+    public bool bendGrapple = true;
     public LayerMask grappleBendMask;
+    [Tooltip("works better when there are many points next to each other or the character is moving fast, but only works with polygoncolliders")]
+    public bool useAdvancedBending = false;
 
     [Header("Misc.")]
     public float maxXVel = 20;
@@ -134,7 +136,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     {
         if (grappleObject)
         {
-            grappleObject.GetComponent<Grapple>().scram()       ;
+            grappleObject.GetComponent<Grapple>().scram();
         }
 
         grappleObject = new GameObject("grappleHost");
@@ -147,7 +149,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     public void releaseGrapple()
     {
-        if (grappleObject) Destroy(grappleObject);
+        //if (grappleObject) Destroy(grappleObject);
 
     }
 

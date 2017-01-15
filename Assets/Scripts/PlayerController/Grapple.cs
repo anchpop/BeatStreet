@@ -1,11 +1,13 @@
 ﻿using System.Collections;
 using System.Linq;
+using MoreLinq;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class GrappleSite
 {
     public Vector3 position;
+    public bool calculatedAngle = false;
     public float angle;
     GameObject connected;
 
@@ -27,11 +29,12 @@ public class Grapple : MonoBehaviour {
     CharacterControllerPlatformer characterController;
     Vector3 startingVelocity;
     Vector3 extensionDirection;
-    List<GrappleSite> grapplePos = new List<GrappleSite>();
+    List<GrappleSite> grappleSites = new List<GrappleSite>();
     float distanceExtended = 0;
     float oldgrav;
 
     float connectionThreshold = .05f;
+    float veryShortLineThreshold = .05f;
 
     States currentState = States.Limbo;
 
@@ -57,14 +60,13 @@ public class Grapple : MonoBehaviour {
 
     private void Update()
     {
-        grapplePos[0].position = body.transform.position;
-        var headgrapple = grapplePos[grapplePos.Count - 1];
-        var backgrapple = grapplePos[grapplePos.Count - 2];
-        var direction = headgrapple.position - backgrapple.position;
-        float velocityTowardsHook = Vector3.Dot(body.velocity, direction);
-
         if (currentState == States.Extending)
         {
+            grappleSites[0].position = body.transform.position;
+            var headgrapple = grappleSites[grappleSites.Count - 1];
+            var backgrapple = grappleSites[grappleSites.Count - 2];
+            var direction = headgrapple.position - backgrapple.position;
+            float velocityTowardsHook = Vector3.Dot(body.velocity, direction);
 
             var delta = (extensionDirection * characterController.grappleSpeed) * Time.deltaTime;
             headgrapple.position += delta + startingVelocity * Time.deltaTime;
@@ -76,7 +78,7 @@ public class Grapple : MonoBehaviour {
                 return;
             }
 
-            backgrapple = grapplePos[grapplePos.Count - 2];
+            backgrapple = grappleSites[grappleSites.Count - 2];
             direction = headgrapple.position - backgrapple.position;
 
             var hits = Physics2D.LinecastAll(backgrapple.position, headgrapple.position, characterController.grappleMask);
@@ -94,84 +96,134 @@ public class Grapple : MonoBehaviour {
         }
 
 
-        getRope().SetPositions(grapplePos.Select(g => g.position).ToArray());
+        getRope().SetPositions(grappleSites.Select(g => g.position).ToArray());
 
 
     }
 
     void FixedUpdate ()
     {
-        grapplePos[0].position = body.transform.position;
-        var headgrapple = grapplePos[1];
-        var backgrapple = grapplePos[0];
-        var direction = headgrapple.position - backgrapple.position;
-        float velocityTowardsHook = Vector3.Dot(body.velocity, direction);
-
         if (currentState == States.Stuck)
         {
+            var oldsites = grappleSites.Select(g => new Vector3(g.position.x, g.position.y, g.position.z)).ToList();
+
+            grappleSites[0].position = body.transform.position;
+            var headgrapple = grappleSites[1];
+            var backgrapple = grappleSites[0];
+            var direction = headgrapple.position - backgrapple.position;
+            float velocityTowardsHook = Vector3.Dot(body.velocity, direction);
+
+
+
+
             var force = direction.normalized * (characterController.grappleForce + direction.magnitude * characterController.grappleForceDistanceBoost);
             characterController.applyContinuousForce(force, characterController.grappleMaxVelocity);
 
             if (characterController.bendGrapple)
             {
 
-                grapplePos = cleanGrapples();
-                grapplePos = recheckGrapplePoints();
-                grapplePos = cleanGrapples();
+                grappleSites = cleanGrapples();
+                grappleSites = recheckGrapplePoints(oldsites);
             }
         }
 
-        getRope().numPositions = grapplePos.Count;
-        getRope().SetPositions(grapplePos.Select(g => g.position).ToArray());
+        getRope().numPositions = grappleSites.Count;
+        getRope().SetPositions(grappleSites.Select(g => g.position).ToArray());
 
     }
 
     public List<GrappleSite> cleanGrapples()
     {
         var newGrapplePos = new List<GrappleSite>();
-        newGrapplePos.Add(grapplePos[0]);
-        for (int i = 1; i < grapplePos.Count - 1; i++) // we want all the elements of the list but the first and last
+        newGrapplePos.Add(grappleSites[0]);
+        for (int i = 1; i < grappleSites.Count - 1; i++) // we want all the elements of the list but the first and last
         {
 
-            var prevGrap = grapplePos[i-1];
-            var currentGrap = grapplePos[i];
-            var nextGrap = grapplePos[i + 1];
+            var prevGrap = grappleSites[i-1];
+            var currentGrap = grappleSites[i];
+            var nextGrap = grappleSites[i + 1];
             var angle = threePointAngle(prevGrap.position, currentGrap.position, nextGrap.position);
-            Debug.Log(i + ": " + angle + " vs the old angle " + currentGrap.angle);
-            if (angle / currentGrap.angle > 0) // if the angle has not changed signs
+            if (currentGrap.calculatedAngle)
+            {
+                Debug.Log(i + ": " + angle + " vs the old angle " + currentGrap.angle);
+                if (angle / currentGrap.angle > 0) // if the angle has not changed signs
+                {
+                    currentGrap.angle = angle;
+                    newGrapplePos.Add(currentGrap);
+                }
+            }
+            else
             {
                 currentGrap.angle = angle;
+                currentGrap.calculatedAngle = true;
                 newGrapplePos.Add(currentGrap);
             }
 
         }
-        newGrapplePos.Add(grapplePos.Last());
+        newGrapplePos.Add(grappleSites.Last());
         return newGrapplePos;
     }
 
-    public List<GrappleSite> recheckGrapplePoints()
+    public List<GrappleSite> recheckGrapplePoints(List<Vector3> oldSites)
     {
         var newGrapplePos = new List<GrappleSite>();
-        newGrapplePos.Add(grapplePos[0]);
-        for (int i = 0; i < grapplePos.Count - 1; i++)
+        newGrapplePos.Add(grappleSites[0]);
+        for (int i = 0; i < grappleSites.Count - 1; i++)
         {
 
-            var firstGrap = grapplePos[i];
-            var secondGrap = grapplePos[i + 1];
+            var firstGrap = grappleSites[i];
+            var secondGrap = grappleSites[i + 1];
 
             var dir = secondGrap.position - firstGrap.position;
 
-            var hit = Physics2D.Raycast(firstGrap.position, dir, dir.magnitude - connectionThreshold, characterController.grappleBendMask);
-            if (hit && hit.collider.gameObject != body.gameObject && hit.point != (Vector2)newGrapplePos.Last().position)
+            if ((firstGrap.position - secondGrap.position).sqrMagnitude > Mathf.Pow(veryShortLineThreshold, 2))
             {
-                var gSite = new GrappleSite(hit.point);
-                gSite.angle = threePointAngle(firstGrap.position, gSite.position, secondGrap.position);
-                newGrapplePos.Add(gSite);
+                var hit = Physics2D.Raycast(firstGrap.position, dir, dir.magnitude - connectionThreshold, characterController.grappleBendMask);
+                if (hit && hit.collider.gameObject != body.gameObject)
+                {
+                    var hitpoint = getNearestColliderPoint(hit);
+                    if (hitpoint != newGrapplePos.Last().position)
+                    {
+                        if (characterController.useAdvancedBending)
+                        {
+                            var verticies = getAllColliderPoints(hit).Select(v => (Vector2)v).ToArray();
+                            newGrapplePos.AddRange(sweepAndBend(secondGrap.position, oldSites[i], firstGrap.position, verticies).Select(v => new GrappleSite(v)));
+                        }
+                        else
+                        {
+                            var gSite = new GrappleSite(hitpoint);
+                            Debug.Log("adding site at " + hitpoint);
+                            newGrapplePos.Add(gSite);
+                        }
+                    }
+                }
             }
 
             newGrapplePos.Add(secondGrap);
         }
         return newGrapplePos;
+    }
+
+    public List<Vector3> sweepAndBend(Vector3 pivot, Vector3 oldPosition, Vector3 newPosition, Vector2[] verticies)
+    {
+        var verticiesInTriangle = verticies.Where(v => pointWithinTriangle(v, pivot, oldPosition, newPosition)).ToList();
+        if (verticiesInTriangle.Count() == 0) return new List<Vector3>() { };
+
+        var newPivot = verticiesInTriangle.MaxBy(v => threePointAngle(v, pivot, newPosition));
+        
+        return new List<Vector3>(sweepAndBend(newPivot, oldPosition, newPosition, verticiesInTriangle.ToArray())) { newPivot }; ;
+    }
+
+    public bool pointWithinTriangle(Vector3 point, Vector3 p1, Vector3 p2, Vector3 p3)
+    {
+        float alpha = ((p2.y - p3.y) * (point.x - p3.x) + (p3.x - p2.x) * (point.y - p3.y)) /
+                ((p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y));
+        float beta = ((p3.y - p1.y) * (point.x - p3.x) + (p1.x - p3.x) * (point.y - p3.y)) /
+                ((p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y));
+        float gamma = 1.0f - alpha - beta;
+
+        return alpha > 0 && beta > 0 && gamma > 0;
+
     }
 
     public void scram()
@@ -186,12 +238,12 @@ public class Grapple : MonoBehaviour {
         characterController = shooter;
         extensionDirection = shootDirection.normalized;
         startingVelocity = body.velocity;
-        grapplePos.Add(new GrappleSite(body.position)); // current starting position of rope
-        grapplePos.Add(new GrappleSite(body.position)); // current ending position of rope
+        grappleSites.Add(new GrappleSite(body.position)); // current starting position of rope
+        grappleSites.Add(new GrappleSite(body.position)); // current ending position of rope
         currentState = States.Extending;
 
-        getRope().numPositions = grapplePos.Count;
-        getRope().SetPositions(grapplePos.Select(g => g.position).ToArray());
+        getRope().numPositions = grappleSites.Count;
+        getRope().SetPositions(grappleSites.Select(g => g.position).ToArray());
 
     }
 
@@ -211,4 +263,53 @@ public class Grapple : MonoBehaviour {
         //return Mathf.Acos(dot); ;
         return angle;
     }
+
+    private List<Vector3> getAllColliderPoints(RaycastHit2D hit)
+    {
+        var verticies = new List<Vector3>();
+        PolygonCollider2D pc = hit.collider as PolygonCollider2D;
+
+
+        for (var pathIndex = 0; pathIndex < pc.pathCount; pathIndex++)
+            // Scan all collider points to find nearest
+            foreach (Vector3 colliderPoint in pc.GetPath(pathIndex))
+                // Convert to world point
+                verticies.Add(hit.transform.TransformPoint(colliderPoint));
+
+        return verticies;
+    }
+
+    private Vector3 getNearestColliderPoint(RaycastHit2D hit)
+    {
+
+        float minDistanceSqr = Mathf.Infinity;
+        Vector3 nearestColliderPoint = Vector3.zero;
+
+        foreach (Vector3 colliderPoint in getAllColliderPoints(hit))
+        {
+            // Convert to world point
+            Vector3 colliderPointWorld = hit.transform.TransformPoint(colliderPoint);
+
+            Vector3 diff = hit.point - (Vector2)colliderPointWorld;
+            float distSqr = diff.sqrMagnitude;
+
+            if (distSqr < minDistanceSqr)
+            {
+                minDistanceSqr = distSqr;
+                nearestColliderPoint = colliderPointWorld;
+            }
+        }
+
+        return nearestColliderPoint;
+    }
+
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        foreach (var site in grappleSites)
+        {
+            Gizmos.DrawSphere(site.position, .05f);
+        }
+    }
+
 }

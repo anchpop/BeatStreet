@@ -235,7 +235,7 @@ MonoBehaviour:
   airFriction: 2
   grappleSpeed: 35
   grappleDistance: 10
-  grappleForce: 80
+  grappleForce: 40
   grappleForceDistanceBoost: 0.05
   grappleMaxVelocity: 15
   grappleGravityScale: 1.2
