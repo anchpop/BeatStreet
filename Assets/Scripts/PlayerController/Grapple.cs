@@ -94,6 +94,22 @@ public class Grapple : MonoBehaviour {
                 }
             }
         }
+        else if (currentState == States.Stuck)
+        {
+            var oldsites = grappleSites.Select(g => new Vector3(g.position.x, g.position.y, g.position.z)).ToList();
+
+            grappleSites[0].position = body.transform.position;
+            var headgrapple = grappleSites[1];
+            var backgrapple = grappleSites[0];
+            var direction = headgrapple.position - backgrapple.position;
+            float velocityTowardsHook = Vector3.Dot(body.velocity, direction);
+
+            if (characterController.bendGrapple)
+            {
+                grappleSites = recheckGrapplePoints(oldsites);
+                grappleSites = cleanGrapples();
+            }
+        }
 
 
         getRope().SetPositions(grappleSites.Select(g => g.position).ToArray());
@@ -105,25 +121,14 @@ public class Grapple : MonoBehaviour {
     {
         if (currentState == States.Stuck)
         {
-            var oldsites = grappleSites.Select(g => new Vector3(g.position.x, g.position.y, g.position.z)).ToList();
-
-            grappleSites[0].position = body.transform.position;
+            
             var headgrapple = grappleSites[1];
             var backgrapple = grappleSites[0];
             var direction = headgrapple.position - backgrapple.position;
-            float velocityTowardsHook = Vector3.Dot(body.velocity, direction);
-
-
-
 
             var force = direction.normalized * (characterController.grappleForce + direction.magnitude * characterController.grappleForceDistanceBoost);
             characterController.applyContinuousForce(force, characterController.grappleMaxVelocity);
 
-            if (characterController.bendGrapple)
-            {
-                grappleSites = recheckGrapplePoints(oldsites);
-                grappleSites = cleanGrapples();
-            }
         }
 
         getRope().numPositions = grappleSites.Count;
@@ -191,7 +196,6 @@ public class Grapple : MonoBehaviour {
                         else
                         {
                             var gSite = new GrappleSite(hitpoint);
-                            Debug.Log("adding site at " + hitpoint);
                             newGrapplePos.Add(gSite);
                         }
                     }
@@ -237,8 +241,8 @@ public class Grapple : MonoBehaviour {
         characterController = shooter;
         extensionDirection = shootDirection.normalized;
         startingVelocity = body.velocity;
-        grappleSites.Add(new GrappleSite(body.position)); // current starting position of rope
-        grappleSites.Add(new GrappleSite(body.position)); // current ending position of rope
+        grappleSites.Add(new GrappleSite(body.transform.position)); // current starting position of rope
+        grappleSites.Add(new GrappleSite(body.transform.position)); // current ending position of rope
         currentState = States.Extending;
 
         getRope().numPositions = grappleSites.Count;
@@ -258,8 +262,6 @@ public class Grapple : MonoBehaviour {
         { // Or > 0
             angle = -angle;
         }
-        //var dot = Vector3.Dot(v1.normalized, v2.normalized);
-        //return Mathf.Acos(dot); ;
         return angle;
     }
 

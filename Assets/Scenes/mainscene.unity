@@ -225,19 +225,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxRunVel: 10
-  runAccel: 50
-  counterForce: 55
+  runAccel: 70
+  counterForce: 80
   groundFriction: 9.19
   jumpVelocity: 11
   numberOfJumps: 2
   upwardGravityScale: 1.6
   downwardGravityScale: 2
   airFriction: 2
-  grappleSpeed: 35
+  grapplePrefab: {fileID: 1138016939789466, guid: c1600516652088345898e27ebed7e41e,
+    type: 2}
+  grappleSpeed: 55
   grappleDistance: 10
-  grappleForce: 40
-  grappleForceDistanceBoost: 0.05
-  grappleMaxVelocity: 15
+  grappleForce: 80
+  grappleForceDistanceBoost: 2
+  grappleMaxVelocity: 12
   grappleGravityScale: 1.2
   grappleMask:
     serializedVersion: 2
@@ -270,7 +272,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1110877214}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 12.54, y: 3.08, z: 0}
+  m_LocalPosition: {x: 12.54, y: -27.63451, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
