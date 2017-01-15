@@ -239,7 +239,7 @@ MonoBehaviour:
   grappleDistance: 10
   grappleForce: 80
   grappleForceDistanceBoost: 2
-  grappleMaxVelocity: 12
+  grappleMaxVelocity: 14
   grappleGravityScale: 1.2
   grappleMask:
     serializedVersion: 2
