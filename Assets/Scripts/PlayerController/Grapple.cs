@@ -147,21 +147,24 @@ public class Grapple : MonoBehaviour {
             var prevGrap = grappleSites[i-1];
             var currentGrap = grappleSites[i];
             var nextGrap = grappleSites[i + 1];
-            var angle = threePointAngle(prevGrap.position, currentGrap.position, nextGrap.position);
-            if (currentGrap.calculatedAngle)
+            if (!prevGrap.position.Colinear(currentGrap.position, nextGrap.position))
             {
-                Debug.Log(i + ": " + angle + " vs the old angle " + currentGrap.angle);
-                if (angle / currentGrap.angle > 0) // if the angle has not changed signs
+                var angle = threePointAngle(prevGrap.position, currentGrap.position, nextGrap.position);
+                if (currentGrap.calculatedAngle)
+                {
+                    Debug.Log(i + ": " + angle + " vs the old angle " + currentGrap.angle);
+                    if (angle / currentGrap.angle > 0) // if the angle has not changed signs
+                    {
+                        currentGrap.angle = angle;
+                        newGrapplePos.Add(currentGrap);
+                    }
+                }
+                else
                 {
                     currentGrap.angle = angle;
+                    currentGrap.calculatedAngle = true;
                     newGrapplePos.Add(currentGrap);
                 }
-            }
-            else
-            {
-                currentGrap.angle = angle;
-                currentGrap.calculatedAngle = true;
-                newGrapplePos.Add(currentGrap);
             }
 
         }
@@ -183,7 +186,8 @@ public class Grapple : MonoBehaviour {
 
             if ((firstGrap.position != oldSites[i] || secondGrap.position != oldSites[i+1]) && (firstGrap.position - secondGrap.position).sqrMagnitude > Mathf.Pow(veryShortLineThreshold, 2))
             {
-                var hit = Physics2D.Raycast(firstGrap.position, dir, dir.magnitude - connectionThreshold, characterController.grappleBendMask);
+                var hits = Physics2D.RaycastAll(firstGrap.position, dir, dir.magnitude - connectionThreshold, characterController.grappleBendMask);
+                var hit = hits.FirstOrDefault();
                 if (hit && hit.collider.gameObject != body.gameObject)
                 {
                     var hitpoint = getNearestColliderPoint(hit);
@@ -191,7 +195,14 @@ public class Grapple : MonoBehaviour {
                     {
                         if (characterController.useAdvancedBending)
                         {
-                            var verticies = getAllColliderPoints(hit).Select(v => (Vector2)v).ToArray();
+                            var verticies = hits.SelectMany(h => getAllColliderPoints(h)).Select(v => (Vector2)v).ToArray();
+                            foreach (var v in verticies)
+                            {
+                                Debug.DrawRay(v, Vector3.up * .05f, Color.red);
+                                Debug.DrawRay(v, Vector3.left * .05f, Color.red);
+                                Debug.DrawRay(v, Vector3.right * .05f, Color.red);
+                                Debug.DrawRay(v, Vector3.down * .05f, Color.red);
+                            }
                             newGrapplePos.AddRange(sweepAndBend(secondGrap.position, oldSites[i], firstGrap.position, verticies).Select(v => new GrappleSite(v)));
                         }
                         else
@@ -273,17 +284,16 @@ public class Grapple : MonoBehaviour {
         {
             PolygonCollider2D collider = hit.collider as PolygonCollider2D;
             for (var pathIndex = 0; pathIndex < collider.pathCount; pathIndex++)
-                // Scan all collider points to find nearest
                 foreach (Vector3 colliderPoint in collider.GetPath(pathIndex))
                     // Convert to world point
-                    verticies.Add(hit.transform.TransformPoint(colliderPoint));
+                    verticies.Add(collider.transform.TransformPoint(colliderPoint + (Vector3)collider.offset));
         }
         else if (hit.collider as BoxCollider2D != null)
         {
             BoxCollider2D collider = hit.collider as BoxCollider2D;
             Vector2 size = collider.size;
             Vector3 centerPoint = new Vector3(collider.offset.x, collider.offset.y, 0f);
-            Vector3 worldPos = hit.collider.transform.TransformPoint(centerPoint);
+            Vector3 worldPos = collider.transform.TransformPoint(centerPoint);
 
             float top = worldPos.y + (size.y / 2f);
             float btm = worldPos.y - (size.y / 2f);
@@ -299,9 +309,7 @@ public class Grapple : MonoBehaviour {
         {
             EdgeCollider2D collider = hit.collider as EdgeCollider2D;
             foreach (var p in collider.points)
-            {
-                verticies.Add(hit.collider.transform.TransformPoint(p));
-            }
+                verticies.Add(collider.transform.TransformPoint(p + collider.offset));
         }
 
         return verticies;
@@ -313,7 +321,7 @@ public class Grapple : MonoBehaviour {
         float minDistanceSqr = Mathf.Infinity;
         Vector3 nearestColliderPoint = Vector3.zero;
 
-        foreach (Vector3 colliderPoint in getAllColliderPoints(hit)) // TODO make it so advanced bending affects things here
+        foreach (Vector3 colliderPoint in getAllColliderPoints(hit)) 
         {
             // Convert to world point
 

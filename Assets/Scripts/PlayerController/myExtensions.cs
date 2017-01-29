@@ -41,6 +41,10 @@ public static class Extensions
         return new Vector2(cos * tx - sin * ty, sin * tx + cos * ty);
     }
     
+    public static bool Colinear(this Vector3 a, Vector3 b, Vector3 c)
+    {
+        return Mathf.Approximately((b.y - a.y) * (c.x - b.x) - (c.y - b.y) * (b.x - a.x), 0);
+    }
 
 
 }

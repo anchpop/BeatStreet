@@ -22,7 +22,8 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     [Header("Jumping")]
     [Tooltip("The y velocity for the player to have after a jump")]
-    public float jumpVelocity = 2;
+    public float firstJumpVelocity = 11;
+    public float sucsessiveJumpVelocity = 7;
     public int numberOfJumps = 1;
     int jumpsRemaining = 0;
     [Tooltip("Gravity when the player is moving upward and holding the up-button")]
@@ -106,7 +107,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     {
         if (jumpsRemaining > 0 && !jumpedThisFrame && (Time.time - timeSinceLastJump) > minSecondsBetweenTrumps)
         {
-            body.velocity = new Vector3(body.velocity.x, Mathf.Max(jumpVelocity, body.velocity.y + jumpVelocity), 0);
+            body.velocity = new Vector3(body.velocity.x, Mathf.Max((jumpsRemaining == numberOfJumps) ? firstJumpVelocity : sucsessiveJumpVelocity, body.velocity.y + sucsessiveJumpVelocity), 0);
             jumpedThisFrame = true;
             jumpsRemaining--;
             timeSinceLastJump = Time.time;
@@ -152,8 +153,8 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     public void releaseGrapple()
     {
-        if (grappleObject)
-            grappleObject.GetComponent<Grapple>().scram();
+        //if (grappleObject)
+            //grappleObject.GetComponent<Grapple>().scram();
     }
 
     public bool isOnGround()
