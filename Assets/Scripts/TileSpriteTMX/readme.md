@@ -1,6 +1,6 @@
 How to use:
 
-1. Make a map in Tiled. (TODO insert link here). When using collisions, create them with the new Tiled Collision Editor (accessable under View > Tile Collision Editor).
+1. Make a map in Tiled. (TODO insert link here). When using collisions, create them with the new Tiled Collision Editor (accessable under View > Tile Collision Editor). I highly reccomend turning on View > Snap to Pixels
 
 2. Place your .tmx files somewhere in the Assets/StreamingAssets folder. For example, "Assets/StreamingAssets/Tilemaps/mymap.tmx". This is not necessary if you plan on using a custom path determined at runtime (see "Extra Tips" below), but works well for most use cases.
 

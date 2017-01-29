@@ -63,8 +63,8 @@ public class Grapple : MonoBehaviour {
         if (currentState == States.Extending)
         {
             grappleSites[0].position = body.transform.position;
-            var headgrapple = grappleSites[grappleSites.Count - 1];
-            var backgrapple = grappleSites[grappleSites.Count - 2];
+            var headgrapple = grappleSites[1];
+            var backgrapple = grappleSites[0];
             var direction = headgrapple.position - backgrapple.position;
             float velocityTowardsHook = Vector3.Dot(body.velocity, direction);
 
@@ -90,6 +90,7 @@ public class Grapple : MonoBehaviour {
                     oldgrav = body.gravityScale;
                     body.gravityScale = characterController.grappleGravityScale;
                     headgrapple.position = hit.point;
+                    break;
                 }
             }
         }
@@ -268,14 +269,40 @@ public class Grapple : MonoBehaviour {
     private List<Vector3> getAllColliderPoints(RaycastHit2D hit)
     {
         var verticies = new List<Vector3>();
-        PolygonCollider2D pc = hit.collider as PolygonCollider2D;
+        if (hit.collider as PolygonCollider2D != null)
+        {
+            PolygonCollider2D collider = hit.collider as PolygonCollider2D;
+            for (var pathIndex = 0; pathIndex < collider.pathCount; pathIndex++)
+                // Scan all collider points to find nearest
+                foreach (Vector3 colliderPoint in collider.GetPath(pathIndex))
+                    // Convert to world point
+                    verticies.Add(hit.transform.TransformPoint(colliderPoint));
+        }
+        else if (hit.collider as BoxCollider2D != null)
+        {
+            BoxCollider2D collider = hit.collider as BoxCollider2D;
+            Vector2 size = collider.size;
+            Vector3 centerPoint = new Vector3(collider.offset.x, collider.offset.y, 0f);
+            Vector3 worldPos = hit.collider.transform.TransformPoint(centerPoint);
 
+            float top = worldPos.y + (size.y / 2f);
+            float btm = worldPos.y - (size.y / 2f);
+            float left = worldPos.x - (size.x / 2f);
+            float right = worldPos.x + (size.x / 2f);
 
-        for (var pathIndex = 0; pathIndex < pc.pathCount; pathIndex++)
-            // Scan all collider points to find nearest
-            foreach (Vector3 colliderPoint in pc.GetPath(pathIndex))
-                // Convert to world point
-                verticies.Add(hit.transform.TransformPoint(colliderPoint));
+            verticies.Add(new Vector3(left, top, worldPos.z));
+            verticies.Add(new Vector3(right, top, worldPos.z));
+            verticies.Add(new Vector3(left, btm, worldPos.z));
+            verticies.Add(new Vector3(right, btm, worldPos.z));
+        }
+        else if (hit.collider as EdgeCollider2D != null) // Untested!
+        {
+            EdgeCollider2D collider = hit.collider as EdgeCollider2D;
+            foreach (var p in collider.points)
+            {
+                verticies.Add(hit.collider.transform.TransformPoint(p));
+            }
+        }
 
         return verticies;
     }
@@ -286,7 +313,7 @@ public class Grapple : MonoBehaviour {
         float minDistanceSqr = Mathf.Infinity;
         Vector3 nearestColliderPoint = Vector3.zero;
 
-        foreach (Vector3 colliderPoint in getAllColliderPoints(hit))
+        foreach (Vector3 colliderPoint in getAllColliderPoints(hit)) // TODO make it so advanced bending affects things here
         {
             // Convert to world point
 
