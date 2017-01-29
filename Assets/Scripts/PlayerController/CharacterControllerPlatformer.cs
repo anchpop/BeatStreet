@@ -153,8 +153,8 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     public void releaseGrapple()
     {
-        //if (grappleObject)
-            //grappleObject.GetComponent<Grapple>().scram();
+        if (grappleObject)
+            grappleObject.GetComponent<Grapple>().scram();
     }
 
     public bool isOnGround()
