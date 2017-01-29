@@ -15,4 +15,4 @@ this may have something to do with your script execution order. Ideeally charact
 
 todo: 
 conserve all velocity when moving on or off a slope
-grapple
+✓ grapple

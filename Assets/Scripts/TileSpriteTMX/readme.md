@@ -23,7 +23,7 @@ Roadmap (order of importance)
 3. ✓ Polygon collision support    
 4. ✓ Box collision support    
 5. ✓ Trigger colliders  
-6. Object pooling
+6. Object pooling (would reduce instansiation time, worth it?)
 7. ✓ Polyline collision support    
 8. ✓ Empty tile in tileset support  
 9. ✓ Prefab creation  
@@ -31,7 +31,7 @@ Roadmap (order of importance)
 11. ✓ Helper functions (get tile properties, get tile form world position, etc.)  
 12. Live updating  
 13. Editor integration  
-14. Support for Hexagonal, Isometric, and Staggered
+14. Support for Hexagonal, Isometric, and Staggered render modes
 15. Support for Render Order
 
 Extra tips:
