@@ -92,8 +92,8 @@ public class CharacterControllerPlatformer : MonoBehaviour {
         var bottomRight = boxCol.bounds.center + new Vector3(boxCol.bounds.extents.x, -boxCol.bounds.extents.y, 0);
         var bottomLeft  = boxCol.bounds.center + new Vector3(-boxCol.bounds.extents.x, -boxCol.bounds.extents.y, 0);
         List<RaycastHit2D> hits = new List<RaycastHit2D>();
-        hits.Add(Physics2D.Raycast(bottomLeft, Vector3.down, dist, groundLayer));
-        hits.Add(Physics2D.Raycast(bottomRight, Vector3.down, dist, groundLayer));
+        hits.Add(Physics2D.Raycast(bottomLeft, Vector3.down, dist, groundLayer)); Debug.DrawRay(bottomLeft, Vector3.down * dist, Color.red);
+        hits.Add(Physics2D.Raycast(bottomRight, Vector3.down, dist, groundLayer)); Debug.DrawRay(bottomRight, Vector3.down * dist, Color.red);
         return hits;
     }
 
@@ -106,7 +106,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     {
         if (jumpsRemaining > 0 && !jumpedThisFrame && (Time.time - timeSinceLastJump) > minSecondsBetweenTrumps)
         {
-            body.velocity = new Vector3(body.velocity.x, Mathf.Max(jumpVelocity, body.velocity.y), 0);
+            body.velocity = new Vector3(body.velocity.x, Mathf.Max(jumpVelocity, body.velocity.y + jumpVelocity), 0);
             jumpedThisFrame = true;
             jumpsRemaining--;
             timeSinceLastJump = Time.time;

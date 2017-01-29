@@ -90,11 +90,10 @@ public class Grapple : MonoBehaviour {
                     oldgrav = body.gravityScale;
                     body.gravityScale = characterController.grappleGravityScale;
                     headgrapple.position = hit.point;
-                    return;
                 }
             }
         }
-        else if (currentState == States.Stuck)
+        if (currentState == States.Stuck)
         {
             var oldsites = grappleSites.Select(g => new Vector3(g.position.x, g.position.y, g.position.z)).ToList();
 
@@ -129,10 +128,11 @@ public class Grapple : MonoBehaviour {
             var force = direction.normalized * (characterController.grappleForce + direction.magnitude * characterController.grappleForceDistanceBoost);
             characterController.applyContinuousForce(force, characterController.grappleMaxVelocity);
 
-        }
 
-        getRope().numPositions = grappleSites.Count;
-        getRope().SetPositions(grappleSites.Select(g => g.position).ToArray());
+            getRope().numPositions = grappleSites.Count;
+            getRope().SetPositions(grappleSites.Select(g => g.position).ToArray());
+
+        }
 
     }
 
