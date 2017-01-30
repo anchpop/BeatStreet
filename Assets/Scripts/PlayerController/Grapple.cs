@@ -143,7 +143,7 @@ public class Grapple : MonoBehaviour {
         newGrapplePos.Add(grappleSites[0]);
         for (int i = 1; i < grappleSites.Count - 1; i++) // we want all the elements of the list but the first and last
         {
-
+            
             var prevGrap = grappleSites[i-1];
             var currentGrap = grappleSites[i];
             var nextGrap = grappleSites[i + 1];
@@ -152,7 +152,6 @@ public class Grapple : MonoBehaviour {
                 var angle = threePointAngle(prevGrap.position, currentGrap.position, nextGrap.position);
                 if (currentGrap.calculatedAngle)
                 {
-                    Debug.Log(i + ": " + angle + " vs the old angle " + currentGrap.angle);
                     if (angle / currentGrap.angle > 0) // if the angle has not changed signs
                     {
                         currentGrap.angle = angle;

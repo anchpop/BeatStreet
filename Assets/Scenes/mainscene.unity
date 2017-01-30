@@ -227,7 +227,7 @@ MonoBehaviour:
   maxRunVel: 10
   runAccel: 70
   counterForce: 80
-  groundFriction: 9.19
+  groundFriction: 10
   firstJumpVelocity: 11
   sucsessiveJumpVelocity: 7
   numberOfJumps: 2
