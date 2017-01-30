@@ -280,7 +280,7 @@ public class Grapple : MonoBehaviour {
     private List<Vector3> getAllColliderPoints(RaycastHit2D hit)
     {
         var verticies = new List<Vector3>();
-        if (hit.collider as PolygonCollider2D != null)
+        if (hit.collider is PolygonCollider2D)
         {
             PolygonCollider2D collider = hit.collider as PolygonCollider2D;
             for (var pathIndex = 0; pathIndex < collider.pathCount; pathIndex++)
@@ -288,7 +288,7 @@ public class Grapple : MonoBehaviour {
                     // Convert to world point
                     verticies.Add(collider.transform.TransformPoint(colliderPoint + (Vector3)collider.offset));
         }
-        else if (hit.collider as BoxCollider2D != null)
+        else if (hit.collider is BoxCollider2D)
         {
             BoxCollider2D collider = hit.collider as BoxCollider2D;
             Vector2 size = collider.size;
@@ -305,7 +305,7 @@ public class Grapple : MonoBehaviour {
             verticies.Add(new Vector3(left, btm, worldPos.z));
             verticies.Add(new Vector3(right, btm, worldPos.z));
         }
-        else if (hit.collider as EdgeCollider2D != null) // Untested!
+        else if (hit.collider is EdgeCollider2D) // Untested! But it should work
         {
             EdgeCollider2D collider = hit.collider as EdgeCollider2D;
             foreach (var p in collider.points)

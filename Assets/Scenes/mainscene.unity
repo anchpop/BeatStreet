@@ -228,14 +228,15 @@ MonoBehaviour:
   runAccel: 70
   counterForce: 80
   groundFriction: 9.19
-  jumpVelocity: 11
+  firstJumpVelocity: 11
+  sucsessiveJumpVelocity: 7
   numberOfJumps: 2
   upwardGravityScale: 1.6
   downwardGravityScale: 2
   airFriction: 2
   grapplePrefab: {fileID: 1138016939789466, guid: c1600516652088345898e27ebed7e41e,
     type: 2}
-  grappleSpeed: 55
+  grappleSpeed: 45
   grappleDistance: 10
   grappleForce: 80
   grappleForceDistanceBoost: 2
@@ -387,7 +388,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: db648731bc46ccc49907d568cf166abb, type: 3}
   prefabs:
   - {fileID: 1000012543933942, guid: 1963fcbee38cd2f40b20908e50a11ae0, type: 2}
-  combineColliders: 1
+  combineColliders: 0
 --- !u!4 &1197167537
 Transform:
   m_ObjectHideFlags: 0
