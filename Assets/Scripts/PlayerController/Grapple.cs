@@ -143,7 +143,7 @@ public class Grapple : MonoBehaviour {
         newGrapplePos.Add(grappleSites[0]);
         for (int i = 1; i < grappleSites.Count - 1; i++) // we want all the elements of the list but the first and last
         {
-            
+
             var prevGrap = grappleSites[i-1];
             var currentGrap = grappleSites[i];
             var nextGrap = grappleSites[i + 1];

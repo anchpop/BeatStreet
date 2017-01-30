@@ -137,10 +137,9 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     public void shootGrapple(Vector3 position)
     {
         if (grappleObject)
-            if (grappleObject)
-              grappleObject.GetComponent<Grapple>().scram();
+            releaseGrapple();
 
-            if (grapplePrefab)
+        if (grapplePrefab)
             grappleObject = Instantiate(grapplePrefab);
         else
             grappleObject = new GameObject("grappleHost");
@@ -154,8 +153,8 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     public void releaseGrapple()
     {
-        //if (grappleObject)
-            //grappleObject.GetComponent<Grapple>().scram();
+        if (grappleObject)
+            grappleObject.GetComponent<Grapple>().scram();
     }
 
     public bool isOnGround()
