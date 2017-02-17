@@ -71,7 +71,7 @@ namespace TileSpriteTMX
 
             if (map.Orientation != OrientationType.Orthogonal) throw new System.Exception("Modes other than Orthagonal are not supported at this time");
 
-
+            
             foreach (var tileSet in map.Tilesets) // we need to get the tilesheets, slice them up into sprites, and put them in spriteList
             {
                 var sheets = tileSheets.Where(c => c.name == tileSet.Name).ToList();
@@ -82,9 +82,10 @@ namespace TileSpriteTMX
                 var slicer = new TileSlicer(sheet, tileSet.TileWidth, tileSet.TileHeight, tileSet.Spacing, tileSet.Margin, pixelsPerUnit);
                 spriteList.AddRange(slicer.sprites);
 
+                
                 foreach (var tile in tileSet.Tiles.Values)
                 {
-                    tileIdMap[tile.Id + 1] = tile; // tileset ids are always one lower than the tilemap Gid. yeah it's dumb
+                    tileIdMap[tile.Id + tileSet.FirstGid] = tile; // Gids are the first gid of the tileset plus the tile Id
                 }
 
             }
@@ -93,22 +94,25 @@ namespace TileSpriteTMX
             for (int layerindex = 0; layerindex < map.Layers.Count; layerindex++)
             {
                 var layer = map.Layers[layerindex];
-                if (!(layer.Properties.ContainsKey(customProperties["ignore"]) && layer.Properties[customProperties["ignore"]].ToLower() == "true")) // if they've opted to ignore the layer
+                if (!(getLayerProperty(layer.Name, customProperties["ignore"]).ToLower() == "true")) // if they've opted to ignore the layer
                 {
                     var lparent = new GameObject(layer.Name); // object to parent the tiles created under
                     lparent.transform.position = transform.position; lparent.transform.SetParent(transform);
 
                     foreach (var tile in layer.Tiles)
                     {
-                        if (tile.Gid > 0 && !(tileIdMap.ContainsKey(tile.Gid) && tileIdMap[tile.Gid].Properties.ContainsKey(customProperties["ignore"]) && tileIdMap[tile.Gid].Properties[customProperties["ignore"]].ToLower() == "true"))
+                        if (tile.Gid > 0)
                         {
                             var tex = spriteList[tile.Gid];
                             var destx = tile.X * (map.TileWidth / pixelsPerUnit);
                             var desty = -tile.Y * (map.TileWidth / pixelsPerUnit);
                             var destPos = new Vector3(destx, desty, 0);
                             var go = addTileObject(tile, tex, layer, destPos, layerindex);
-                            if (go) go.transform.SetParent(lparent.transform);
-                            go.transform.position = destPos + lparent.transform.position;
+                            if (go)
+                            {
+                                go.transform.SetParent(lparent.transform);
+                                go.transform.position = destPos + lparent.transform.position;
+                            }
                         }
                     }
                     if (unsimplifiedPolygons.ContainsKey(layer) && unsimplifiedPolygons[layer].Count != 0)
@@ -133,7 +137,7 @@ namespace TileSpriteTMX
 
         GameObject addTileObject(TmxLayerTile tile, Sprite tex, TmxLayer layer, Vector3 destPos, int orderInLayer = 0)
         {
-            if (tile.Gid > 0) 
+            if (tile.Gid > 0 && !(getTileProperty(layer.Name, tile.X, tile.Y, customProperties["ignore"]).ToLower() == "true"))
             {
                 // determine whether we should flip horisontally, flip vertically, or rotate 90 degrees
                 bool flipX = tile.HorizontalFlip;
@@ -149,9 +153,7 @@ namespace TileSpriteTMX
                 go.transform.Rotate(new Vector3(0, 0, rotate90 ? 90 : 0));
 
                 var sprend = go.GetComponent<SpriteRenderer>();
-                if (!(tileIdMap.ContainsKey(tile.Gid) &&
-                    tileIdMap[tile.Gid].Properties.ContainsKey(customProperties["don't render"]) &&
-                    tileIdMap[tile.Gid].Properties[customProperties["don't render"]].ToLower() == "true"))
+                if (!(getTileProperty(layer.Name, tile.X, tile.Y, customProperties["don't render"]).ToLower() == "true"))
                 {
                     if (sprend.sprite == null) sprend.sprite = tex;
                     sprend.flipX = flipX;
@@ -327,6 +329,11 @@ namespace TileSpriteTMX
         {
             return getTmxLayer(layer).Properties;
         }
+        public string getLayerProperty(string layer, string property)  // returns "" if property does not exist
+        {
+            return getLayerProperties(layer).GetValueOrDefault(property, "");
+        }
+
         public Dictionary<string, string> getTileProperties(string layer, Vector3 gridlocation)
         {
             return getTileProperties(layer, Mathf.FloorToInt(gridlocation.x), Mathf.FloorToInt(gridlocation.y));
@@ -336,17 +343,26 @@ namespace TileSpriteTMX
             if (tileIdMap.ContainsKey(getTmxTile(layer, gridLocationX, gridLocationY).Gid)) return tileIdMap[getTmxTile(layer, gridLocationX, gridLocationY).Gid].Properties;
             else return new Dictionary<string, string>();
         }
+        public string getTileProperty(string layer, Vector3 gridlocation, string property) // returns "" if property does not exist
+        {
+            return getTileProperty(layer, Mathf.FloorToInt(gridlocation.x), Mathf.FloorToInt(gridlocation.y), property);
+        }
+        public string getTileProperty(string layer, int gridLocationX, int gridLocationY, string property) // returns "" if property does not exist
+        {
+            //Debug.Log(getTileProperties(layer, gridLocationX, gridLocationY).GetValueOrDefault(property, "est"));
+            return getTileProperties(layer, gridLocationX, gridLocationY).GetValueOrDefault(property, "");
+        }
 
 
 
         public TmxLayerTile getTmxTile(string layer, Vector3 gridlocation)
-        {
+        {        
             return getTmxTile(layer, Mathf.FloorToInt(gridlocation.x), Mathf.FloorToInt(gridlocation.y));
         }
         public TmxLayerTile getTmxTile(string layer, int gridLocationX, int gridLocationY)
         {
             var tilesFound = getTmxLayer(layer).Tiles.ToList().Where(t => t.X == gridLocationX && t.Y == gridLocationY).ToList();
-            if (tilesFound.Count == 0) throw new System.Exception("There were no tiles found at (" + gridLocationX + ", " + gridLocationY + ")");
+            if (tilesFound.Count == 0) throw new Exception("There were no tiles found at (" + gridLocationX + ", " + gridLocationY + ")");
             return tilesFound.First();
         }
 
