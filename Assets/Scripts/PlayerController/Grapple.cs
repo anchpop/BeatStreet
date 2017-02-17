@@ -183,7 +183,7 @@ public class Grapple : MonoBehaviour {
 
             var dir = secondGrap.position - firstGrap.position;
 
-            if ((firstGrap.position != oldSites[i] || secondGrap.position != oldSites[i+1]) && (firstGrap.position - secondGrap.position).sqrMagnitude > Mathf.Pow(veryShortLineThreshold, 2))
+            if ((firstGrap.position != oldSites[i] || secondGrap.position != oldSites[i+1])) //&& (firstGrap.position - secondGrap.position).sqrMagnitude > Mathf.Pow(veryShortLineThreshold, 2))
             {
                 var hits = Physics2D.RaycastAll(firstGrap.position, dir, dir.magnitude - connectionThreshold, characterController.grappleBendMask);
                 var hit = hits.FirstOrDefault();
@@ -202,7 +202,7 @@ public class Grapple : MonoBehaviour {
                                 Debug.DrawRay(v, Vector3.right * .05f, Color.red);
                                 Debug.DrawRay(v, Vector3.down * .05f, Color.red);
                             }
-                            newGrapplePos.AddRange(sweepAndBend(secondGrap.position, oldSites[i], firstGrap.position, verticies).Select(v => new GrappleSite(v)));
+                            newGrapplePos.AddRange(sweepAndBend(secondGrap.position, oldSites[i], firstGrap.position, verticies).Where(v => v != newGrapplePos.Last().position).Select(v => new GrappleSite(v)));
                         }
                         else
                         {

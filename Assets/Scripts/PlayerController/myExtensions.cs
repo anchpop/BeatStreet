@@ -43,7 +43,7 @@ public static class Extensions
     
     public static bool Colinear(this Vector3 a, Vector3 b, Vector3 c)
     {
-        return Mathf.Abs((b.y - a.y) * (c.x - b.x) - (c.y - b.y) * (b.x - a.x)) < .0001;
+        return Mathf.Abs((b.y - a.y) * (c.x - b.x) - (c.y - b.y) * (b.x - a.x)) < .00001;
     }
 
 
