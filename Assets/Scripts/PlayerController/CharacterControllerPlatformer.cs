@@ -58,7 +58,7 @@ public class CharacterControllerPlatformer : MonoBehaviour {
     float timeSinceLastJump;
     float minSecondsBetweenTrumps = .2f;
 
-    float raycastDownDist = .1f;
+    float groundedDownDist = .1f;
 
     Grapple grapple;
     GameObject grappleObject;
@@ -159,12 +159,12 @@ public class CharacterControllerPlatformer : MonoBehaviour {
 
     public bool isOnGround()
     {
-        return raycastDown(raycastDownDist).Any(r => Vector2.Angle(Vector2.up, r.normal) < 90); // make sure that we didn't collide with a wall
+        return raycastDown(groundedDownDist).Any(r => Vector2.Angle(Vector2.up, r.normal) < 90); // make sure that we didn't collide with a wall
     }
 
     public Vector2 getGroundNormal() // assumes character is grounded
     {
-        var hits = raycastDown(raycastDownDist).Where(x => x);
+        var hits = raycastDown(groundedDownDist).Where(x => x);
         if (body.velocity.x < 0) // if we're moving left, return the first (and therefore leftmost) raycast's normal
             return hits.First().normal;
         else
